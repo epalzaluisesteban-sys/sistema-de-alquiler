@@ -53,7 +53,6 @@ Three roles: **Propietario** (owner, mapped role `admin`), **Encargado** (manage
 - `App\Http\Controllers\PropietarioController` backs the entire `admin.*` route group for **both** Propietario and Encargado — it picks between `resources/views/Propietario/*` and `resources/views/Encargado/*` blade views at runtime based on the authenticated user's mapped role (see the `esEncargado()` helper). There is no separate EncargadoController.
 - `App\Http\Controllers\TenantController` backs the `tenant.*` routes and renders `resources/views/Inquilino/*`.
 - `App\Http\Controllers\LoginController::login` authenticates via `Auth::attempt(['cedula' => ..., 'password' => ...])` and redirects based on the mapped role: `admin`/`encargado` → `admin.dashboard`, `tenant` → `tenant.dashboard`. Any other/missing role logs the user back out.
-- `App\Http\Controllers\AdminController` (and `AdminController.new.php`) exist in the codebase but are **not wired into any route** — dead code left from an earlier iteration. Don't assume routes point there; check `routes/web.php` for the actual controller in use.
 
 ### Domain model relationships
 
