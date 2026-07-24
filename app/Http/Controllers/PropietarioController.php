@@ -118,7 +118,7 @@ class PropietarioController extends Controller
         $properties = Propiedad::where('estado', 'disponible')->orderBy('nombre')->get();
         $rooms = Habitacion::where('estado', 'disponible')->with('propiedad')->orderBy('numero')->get();
 
-        return view('Propietario.nuevo-inquilino', compact('properties', 'rooms'));
+        return view($this->esEncargado() ? 'Encargado.nuevo-inquilino' : 'Propietario.nuevo-inquilino', compact('properties', 'rooms'));
     }
 
     public function storeInquilino(Request $request)
@@ -167,7 +167,7 @@ class PropietarioController extends Controller
             ->orderBy('numero')
             ->get();
 
-        return view('Propietario.editar-inquilino', compact('inquilino', 'asignacionActiva', 'properties', 'rooms'));
+        return view($this->esEncargado() ? 'Encargado.editar-inquilino' : 'Propietario.editar-inquilino', compact('inquilino', 'asignacionActiva', 'properties', 'rooms'));
     }
 
     public function updateInquilino(Request $request, $id)
@@ -498,7 +498,7 @@ class PropietarioController extends Controller
             ->with(['usuario', 'habitacion.propiedad', 'propiedad'])
             ->get();
 
-        return view('Propietario.nuevo-pago', compact('asignaciones'));
+        return view($this->esEncargado() ? 'Encargado.nuevo-pago' : 'Propietario.nuevo-pago', compact('asignaciones'));
     }
 
     public function storePago(Request $request)
@@ -524,7 +524,7 @@ class PropietarioController extends Controller
             ->with(['usuario', 'habitacion.propiedad', 'propiedad'])
             ->get();
 
-        return view('Propietario.editar-pago', compact('pago', 'asignaciones'));
+        return view($this->esEncargado() ? 'Encargado.editar-pago' : 'Propietario.editar-pago', compact('pago', 'asignaciones'));
     }
 
     public function updatePago(Request $request, $id)

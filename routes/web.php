@@ -46,22 +46,6 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/inquilino/{id}', [PropietarioController::class, 'updateInquilino'])->name('admin.update-inquilino');
         Route::delete('/inquilino/{id}', [PropietarioController::class, 'destroyInquilino'])->name('admin.destroy-inquilino');
 
-        // Propiedades
-        Route::get('/propiedades', [PropietarioController::class, 'propiedades'])->name('admin.propiedades');
-        Route::get('/propiedades/nueva', [PropietarioController::class, 'nuevaPropiedad'])->name('admin.nueva-propiedad');
-        Route::post('/propiedades', [PropietarioController::class, 'storePropiedad'])->name('admin.store-propiedad');
-        Route::get('/propiedades/{id}/editar', [PropietarioController::class, 'editPropiedad'])->name('admin.edit-propiedad');
-        Route::put('/propiedades/{id}', [PropietarioController::class, 'updatePropiedad'])->name('admin.update-propiedad');
-        Route::delete('/propiedades/{id}', [PropietarioController::class, 'destroyPropiedad'])->name('admin.destroy-propiedad');
-
-        // Habitaciones
-        Route::get('/habitaciones', [PropietarioController::class, 'habitaciones'])->name('admin.habitaciones');
-        Route::get('/habitaciones/nueva', [PropietarioController::class, 'nuevaHabitacion'])->name('admin.nueva-habitacion');
-        Route::post('/habitaciones', [PropietarioController::class, 'storeHabitacion'])->name('admin.store-habitacion');
-        Route::get('/habitaciones/{id}/editar', [PropietarioController::class, 'editHabitacion'])->name('admin.edit-habitacion');
-        Route::put('/habitaciones/{id}', [PropietarioController::class, 'updateHabitacion'])->name('admin.update-habitacion');
-        Route::delete('/habitaciones/{id}', [PropietarioController::class, 'destroyHabitacion'])->name('admin.destroy-habitacion');
-
         // Pagos
         Route::get('/pagos', [PropietarioController::class, 'pagos'])->name('admin.pagos');
         Route::get('/pagos/nuevo', [PropietarioController::class, 'nuevoPago'])->name('admin.nuevo-pago');
@@ -74,7 +58,7 @@ Route::middleware(['auth'])->group(function () {
         // Notificaciones
         Route::get('/notificaciones', [PropietarioController::class, 'notificaciones'])->name('admin.notificaciones');
 
-        // Gestión de Encargados: exclusiva del Propietario (dueño)
+        // Gestión de Encargados, Propiedades y Habitaciones: exclusiva del Propietario (dueño)
         Route::middleware(['role:admin'])->group(function () {
             Route::get('/encargados', [PropietarioController::class, 'encargados'])->name('admin.encargados');
             Route::get('/nuevo-encargado', [PropietarioController::class, 'nuevoEncargado'])->name('admin.nuevo-encargado');
@@ -82,6 +66,22 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/encargado/{id}/editar', [PropietarioController::class, 'editEncargado'])->name('admin.edit-encargado');
             Route::put('/encargado/{id}', [PropietarioController::class, 'updateEncargado'])->name('admin.update-encargado');
             Route::delete('/encargado/{id}', [PropietarioController::class, 'destroyEncargado'])->name('admin.destroy-encargado');
+
+            // Propiedades
+            Route::get('/propiedades', [PropietarioController::class, 'propiedades'])->name('admin.propiedades');
+            Route::get('/propiedades/nueva', [PropietarioController::class, 'nuevaPropiedad'])->name('admin.nueva-propiedad');
+            Route::post('/propiedades', [PropietarioController::class, 'storePropiedad'])->name('admin.store-propiedad');
+            Route::get('/propiedades/{id}/editar', [PropietarioController::class, 'editPropiedad'])->name('admin.edit-propiedad');
+            Route::put('/propiedades/{id}', [PropietarioController::class, 'updatePropiedad'])->name('admin.update-propiedad');
+            Route::delete('/propiedades/{id}', [PropietarioController::class, 'destroyPropiedad'])->name('admin.destroy-propiedad');
+
+            // Habitaciones
+            Route::get('/habitaciones', [PropietarioController::class, 'habitaciones'])->name('admin.habitaciones');
+            Route::get('/habitaciones/nueva', [PropietarioController::class, 'nuevaHabitacion'])->name('admin.nueva-habitacion');
+            Route::post('/habitaciones', [PropietarioController::class, 'storeHabitacion'])->name('admin.store-habitacion');
+            Route::get('/habitaciones/{id}/editar', [PropietarioController::class, 'editHabitacion'])->name('admin.edit-habitacion');
+            Route::put('/habitaciones/{id}', [PropietarioController::class, 'updateHabitacion'])->name('admin.update-habitacion');
+            Route::delete('/habitaciones/{id}', [PropietarioController::class, 'destroyHabitacion'])->name('admin.destroy-habitacion');
         });
     });
 
