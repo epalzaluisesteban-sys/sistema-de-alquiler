@@ -1,0 +1,371 @@
+/* Importar FontAwesome para los iconos blancos */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Forzamos el fondo con !important para evitar que otros estilos lo pisen */
+    background: url('../imagen/liam_10.png') no-repeat center center fixed !important;
+    background-size: cover !important;
+    background-attachment: fixed;
+    min-height: 100vh;
+    color: #f3f4f6;
+}
+
+/* Efecto Vidrio (Glassmorphism) */
+.glass-panel {
+    background: #1231269f;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 7px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Botones Glossy estilo Frutiger Aero */
+.btn-glossy {
+    /* Ahora en color verde oscuro esmeralda para combinar con el fondo */
+    background: linear-gradient(180deg, #1e8d47 0%, #14532d 100%);
+    color: #D1D5DB;
+    padding: 12px 24px;
+    border: 0px solid rgba(255, 255, 255, 0);
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 6px rgba(0,0,0,0.2);
+    display: inline-block;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.btn-glossy:hover {
+    background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+    transform: translateY(-2px);
+}
+
+/* Layout Compartido para Dashboards */
+.dashboard-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px;
+}
+
+.sidebar {
+    flex: 1 1 250px;
+    align-self: flex-start;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 90vh;
+    gap: 15px;
+}
+
+.main-content {
+    flex: 3 1 600px;
+    padding: 30px;
+}
+
+.sidebar a {
+    color: #D1D5DB;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(13, 31, 23, 0.368);
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sidebar a:hover { background: rgba(255,255,255,0.3); }
+
+/*Estilos de login*/
+.login-card {
+            
+            max-width: 350px;
+            margin: 100px auto;
+            padding: 40px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: #d1d5dbef;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .form-input:focus { border-color: #4ade80; background: rgba(255,255,255,0.2); }
+        .password-wrapper { position: relative; }
+        .password-wrapper .form-input { padding-right: 42px; }
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #d1d5dbef;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .toggle-password:hover { color: #ffffff; }
+        .alert-error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #ff4d4d;
+            color: #ff4d4d;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        input:-webkit-autofill {
+        transition: background-color 5000s ease-in-out 0s;
+        }
+
+/* Estilos de Formulario Globales */
+.form-group { margin-bottom: 15px; }
+label { display: block; color: #D1D5DB; margin-bottom: 5px; font-weight: bold; }
+input, select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 0px solid rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: #D1D5DB;
+    box-sizing: border-box;
+}
+
+/* El menú desplegable de <select> lo renderiza el sistema operativo y no
+   hereda el fondo semitransparente de arriba: sin esto, las opciones quedan
+   con texto claro sobre fondo claro y solo se ven al pasar el cursor. */
+select option {
+    background: #1f2937;
+    color: #D1D5DB;
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 15px;
+    margin: 20px auto;
+    width: 90%;
+    max-width: 800px;
+}
+
+.navbar a {
+    color: #D1D5DB;
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* --- ESTRUCTURA RESPONSIVA --- */
+
+/* Grillas de estadísticas y acciones */
+.stats-grid, .action-cards {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.stat-box, .action-card {
+    flex: 1 1 200px;
+    padding: 20px;
+    text-align: center;
+}
+
+.tenant-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+}
+
+/* Filas de formulario que deben colapsar en móvil */
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+@media (max-width: 768px) {
+    .dashboard-layout {
+        flex-direction: column;
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .sidebar {
+        flex: none;
+        width: 100%;
+        min-height: auto;
+        padding: 10px;
+        box-sizing: border-box;
+        border-radius: 15px;
+    }
+
+    .sidebar h2 {
+        font-size: 1.2rem;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .sidebar a {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    .main-content {
+        flex: none;
+        width: 100%;
+        padding: 15px;
+        box-sizing: border-box;
+        margin-top: 0;
+    }
+
+    /* Evitar el efecto de cajas apiladas dentro de otras cajas */
+    .main-content .glass-panel, 
+    .tenant-container .glass-panel {
+        background: rgba(255, 255, 255, 0.05);
+        border: none;
+        box-shadow: none;
+        padding: 15px !important;
+    }
+
+    .tenant-container {
+        margin: 15px !important;
+        padding: 20px 15px !important;
+        width: auto;
+    }
+
+    .stats-grid, .action-cards, .form-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .stat-box, .action-card {
+        flex: 1 1 100%;
+    }
+}
+
+/* Hamburger Menu */
+.hamburger {
+    display: none;
+    width: 25px;
+    flex-direction: column;
+    cursor: pointer;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    margin: 10px;
+}
+
+.hamburger div {
+    width: 25px;
+    height: 3px;
+    background: white;
+    margin: 3px 0;
+    transition: 0.3s;
+}
+
+@media (max-width: 768px) {
+    .hamburger {
+        display: flex;
+    }
+
+    .sidebar {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 10px;
+        width: calc(100% - 20px);
+        z-index: 1000;
+    }
+
+    .sidebar.show {
+        display: flex;
+    }
+}
+
+/* Welcome Page Styles */
+.main-container {
+    width: 90%;
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 40px;
+    text-align: center;
+}
+
+.portals-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-top: 40px;
+    justify-content: center;
+}
+
+.portal-card {
+    flex: 1 1 300px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.portal-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.portal-card p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 30px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        margin: 20px auto;
+        padding: 20px;
+    }
+
+    .portals-grid {
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .portal-card {
+        flex: 1 1 100%;
+        padding: 20px;
+    }
+
+    .portal-card h3 {
+        font-size: 1.2rem;
+    }
+
+    .portal-card p {
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+}
