@@ -148,6 +148,25 @@ input, select {
     box-sizing: border-box;
 }
 
+/* Botón nativo de <input type="file"> (p. ej. "Comprobante" en Notificar
+   Pago): sin esto queda con el botón gris por defecto del navegador,
+   desentonando con los botones .btn-glossy del resto de los formularios. */
+input[type="file"]::file-selector-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: #D1D5DB;
+    padding: 8px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 12px;
+    transition: all 0.3s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
 /* El menú desplegable de <select> lo renderiza el sistema operativo y no
    hereda el fondo semitransparente de arriba: sin esto, las opciones quedan
    con texto claro sobre fondo claro y solo se ven al pasar el cursor. */

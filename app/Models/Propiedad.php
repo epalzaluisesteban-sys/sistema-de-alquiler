@@ -14,6 +14,9 @@ class Propiedad extends Model
 {
     use HasFactory;
 
+    // Nombre de tabla explícito: por convención Eloquent buscaría
+    // "propiedads", así que hay que indicarlo a mano (ver nota de
+    // CLAUDE.md sobre nombres de tabla en español).
     protected $table = 'propiedades';
 
     protected $fillable = [
@@ -23,13 +26,13 @@ class Propiedad extends Model
         'estado',
     ];
 
-    // registra: Propiedad N --- 1 Usuario
+    // registra: Propiedad N --- 1 Usuario (el dueño/propietario de esta propiedad)
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(Usuario::class);
     }
 
-    // contiene: Propiedad 1 --- N Habitacion
+    // contiene: Propiedad 1 --- N Habitacion (las habitaciones que se pueden alquilar por separado)
     public function habitaciones(): HasMany
     {
         return $this->hasMany(Habitacion::class);

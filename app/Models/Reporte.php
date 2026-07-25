@@ -13,6 +13,9 @@ class Reporte extends Model
 {
     use HasFactory;
 
+    // Un reporte de mantenimiento: a qué alquiler pertenece, qué problema
+    // describe el inquilino, cuándo se creó y en qué estado está
+    // (p. ej. pendiente/en revisión/resuelto).
     protected $fillable = [
         'asignacion_id',
         'descripcion',
@@ -24,7 +27,7 @@ class Reporte extends Model
         'fecha' => 'date',
     ];
 
-    // genera: Reporte N --- 1 Asignacion
+    // genera: Reporte N --- 1 Asignacion (cada reporte pertenece a un único alquiler)
     public function asignacion(): BelongsTo
     {
         return $this->belongsTo(Asignacion::class);

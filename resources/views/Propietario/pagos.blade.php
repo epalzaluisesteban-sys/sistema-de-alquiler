@@ -68,6 +68,7 @@
                             <th style="padding: 12px;">Monto</th>
                             <th style="padding: 12px;">Fecha</th>
                             <th style="padding: 12px;">Estado</th>
+                            <th style="padding: 12px;">Comprobante</th>
                             <th style="padding: 12px; text-align: center;">Acciones</th>
                         </tr>
                     </thead>
@@ -99,6 +100,13 @@
                                         <option value="confirmado" @selected($pago->estado_pago === 'confirmado')>Confirmado</option>
                                     </select>
                                 </form>
+                            </td>
+                            <td style="padding: 12px;">
+                                @if($pago->ruta_comprobante)
+                                    <a href="{{ \Illuminate\Support\Facades\Storage::url($pago->ruta_comprobante) }}" target="_blank" style="color: #86EFAC;"><i class="fas fa-file-alt"></i> Ver</a>
+                                @else
+                                    —
+                                @endif
                             </td>
                             <td style="padding: 12px; text-align: center; display: flex; justify-content: center; gap: 15px;">
                                 <a href="{{ route('admin.edit-pago', $pago->id) }}" style="color: #86EFAC; text-decoration: none;" title="Editar">

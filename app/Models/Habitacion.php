@@ -16,6 +16,9 @@ class Habitacion extends Model
 
     protected $table = 'habitaciones';
 
+    // Datos de una habitación dentro de una propiedad: a qué propiedad
+    // pertenece, su número/identificador, precio de alquiler y estado
+    // (Disponible/Ocupada/Mantenimiento).
     protected $fillable = [
         'propiedad_id',
         'numero',
@@ -23,13 +26,13 @@ class Habitacion extends Model
         'estado',
     ];
 
-    // contiene: Habitacion N --- 1 Propiedad
+    // contiene: Habitacion N --- 1 Propiedad (la propiedad a la que pertenece esta habitación)
     public function propiedad(): BelongsTo
     {
         return $this->belongsTo(Propiedad::class);
     }
 
-    // asignada: Habitacion 1 --- N Asignacion
+    // asignada: Habitacion 1 --- N Asignacion (historial de alquileres de esta habitación)
     public function asignaciones(): HasMany
     {
         return $this->hasMany(Asignacion::class);

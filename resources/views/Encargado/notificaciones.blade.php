@@ -44,9 +44,18 @@
                                 <span style="float: right; opacity: 0.8; font-size: 0.85rem;">{{ $reporte->fecha?->format('d/m/Y') }}</span>
                             </p>
                             <p style="margin: 0 0 5px 0;">{{ $reporte->descripcion }}</p>
-                            <span style="background: {{ $reporte->estado_reporte === 'en_revision' ? '#f59e0b' : '#ef4444' }}; padding: 3px 8px; border-radius: 5px; font-size: 0.8rem;">
-                                {{ $reporte->estado_reporte === 'en_revision' ? 'En revisión' : 'Pendiente' }}
-                            </span>
+                            @php
+                                $coloresReporte = ['pendiente' => '#ef4444', 'en_revision' => '#f59e0b', 'resuelto' => '#22c55e'];
+                            @endphp
+                            <form action="{{ route('admin.reportes.quick-estado', $reporte->id) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <select name="estado_reporte" onchange="this.form.submit()" title="Cambiar estado" style="width: auto; background: {{ $coloresReporte[$reporte->estado_reporte] ?? '#6b7280' }}; color: white; border: none; padding: 4px 8px; border-radius: 5px; font-size: 0.8rem; cursor: pointer;">
+                                    <option value="pendiente" @selected($reporte->estado_reporte === 'pendiente')>Pendiente</option>
+                                    <option value="en_revision" @selected($reporte->estado_reporte === 'en_revision')>En revisión</option>
+                                    <option value="resuelto" @selected($reporte->estado_reporte === 'resuelto')>Resuelto</option>
+                                </select>
+                            </form>
                         </div>
                     @endforeach
                 </div>

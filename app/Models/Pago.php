@@ -13,11 +13,15 @@ class Pago extends Model
 {
     use HasFactory;
 
+    // Un pago asociado a un alquiler: monto, fecha, estado
+    // (pendiente/confirmado/rechazado, según el flujo de PagoController) y la
+    // ruta al comprobante que el inquilino sube opcionalmente.
     protected $fillable = [
         'asignacion_id',
         'monto',
         'fecha',
         'estado_pago',
+        'ruta_comprobante',
     ];
 
     protected $casts = [
@@ -25,7 +29,7 @@ class Pago extends Model
         'monto' => 'decimal:2',
     ];
 
-    // genera: Pago N --- 1 Asignacion
+    // genera: Pago N --- 1 Asignacion (cada pago pertenece a un único alquiler)
     public function asignacion(): BelongsTo
     {
         return $this->belongsTo(Asignacion::class);

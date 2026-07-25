@@ -53,7 +53,7 @@
 
                     <div class="form-group">
                         <label><i class="fas fa-key"></i> Tipo de Alquiler</label>
-                        <select id="rental-type" name="rental_type" required>
+                        <select id="rental-type" name="rental_type" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);" required>
                             <option value="">-- Seleccione --</option>
                             <option value="Casa" @selected(old('rental_type') === 'Casa')>Propiedad completa (Casa)</option>
                             <option value="Habitación" @selected(old('rental_type') === 'Habitación')>Habitación</option>
@@ -62,7 +62,7 @@
 
                     <div class="form-group" id="house-field" style="display: none;">
                         <label><i class="fas fa-building"></i> Propiedad</label>
-                        <select id="house-select">
+                        <select id="house-select" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
                             <option value="">Seleccione una propiedad</option>
                             @foreach($properties as $property)
                                 <option value="{{ $property->id }}">{{ $property->nombre }}</option>
@@ -72,7 +72,7 @@
 
                     <div class="form-group" id="room-field" style="display: none;">
                         <label><i class="fas fa-door-open"></i> Habitación</label>
-                        <select id="room-select">
+                        <select id="room-select" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
                             <option value="">Seleccione una habitación</option>
                             @foreach($rooms as $room)
                                 <option value="{{ $room->id }}">Habitación {{ $room->numero }} — {{ $room->propiedad?->nombre ?? 'Sin propiedad' }}</option>

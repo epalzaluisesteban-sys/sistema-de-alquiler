@@ -16,6 +16,11 @@ class Asignacion extends Model
 
     protected $table = 'asignaciones';
 
+    // Una asignación es el "contrato" que vincula a un inquilino (usuario_id)
+    // con lo que alquila: o una habitación puntual (habitacion_id) o una
+    // propiedad completa (propiedad_id) — solo uno de los dos suele estar
+    // presente según el tipo de alquiler. Incluye fechas de inicio/fin y el
+    // estado del alquiler (activa/finalizada, etc.).
     protected $fillable = [
         'usuario_id',
         'habitacion_id',
@@ -30,7 +35,7 @@ class Asignacion extends Model
         'fecha_fin' => 'date',
     ];
 
-    // ocupa: Asignacion N --- 1 Usuario
+    // ocupa: Asignacion N --- 1 Usuario (el inquilino de este alquiler)
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(Usuario::class);
@@ -48,19 +53,22 @@ class Asignacion extends Model
         return $this->belongsTo(Propiedad::class);
     }
 
-    // Propiedad efectiva de la asignación, venga de una habitación o de la propiedad completa.
+    // Resuelve la propiedad "efectiva" de la asignación sin que el resto del
+    // código tenga que preguntar si es alquiler por habitación o por
+    // propiedad completa: si viene de una habitación, sube hasta su
+    // propiedad; si no, usa la propiedad asignada directamente.
     public function residencia(): ?Propiedad
     {
         return $this->habitacion?->propiedad ?? $this->propiedad;
     }
 
-    // genera: Asignacion 1 --- N Pago
+    // genera: Asignacion 1 --- N Pago (historial de pagos de este alquiler)
     public function pagos(): HasMany
     {
         return $this->hasMany(Pago::class);
     }
 
-    // genera: Asignacion 1 --- N Reporte
+    // genera: Asignacion 1 --- N Reporte (reportes de mantenimiento de este alquiler)
     public function reportes(): HasMany
     {
         return $this->hasMany(Reporte::class);
