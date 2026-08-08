@@ -55,13 +55,17 @@ class PagoController extends Controller
         return view($this->esEncargado() ? 'Encargado.pagos' : 'Propietario.pagos', compact('pagos', 'estado', 'q', 'desde', 'hasta'));
     }
 
-    public function nuevoPago()
+    public function nuevoPago(Request $request)
     {
         $asignaciones = Asignacion::where('estado_asignacion', 'activo')
             ->with(['usuario', 'habitacion.propiedad', 'propiedad'])
             ->get();
 
-        return view($this->esEncargado() ? 'Encargado.nuevo-pago' : 'Propietario.nuevo-pago', compact('asignaciones'));
+        // Permite llegar acá desde "Registrar pago" en la lista de
+        // Inquilinos con la asignación de ese inquilino ya preseleccionada.
+        $preseleccionada = $request->query('asignacion');
+
+        return view($this->esEncargado() ? 'Encargado.nuevo-pago' : 'Propietario.nuevo-pago', compact('asignaciones', 'preseleccionada'));
     }
 
     public function storePago(Request $request)

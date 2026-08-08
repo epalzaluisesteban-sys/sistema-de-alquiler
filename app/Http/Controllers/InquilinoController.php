@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\EsEncargado;
 use App\Models\Asignacion;
 use App\Models\Habitacion;
+use App\Models\Inquilino;
 use App\Models\Propiedad;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
@@ -112,6 +113,8 @@ class InquilinoController extends Controller
             'telefono' => $request->telefono,
         ]);
 
+        Inquilino::create(['usuario_id' => $user->id]);
+
         $this->asignarResidencia($user, $request->rental_type, (int) $request->property_id);
 
         return redirect()->route('admin.inquilinos')->with('success', 'Inquilino registrado con éxito.');
@@ -191,6 +194,22 @@ class InquilinoController extends Controller
         }
 
         return redirect()->route('admin.inquilinos')->with('success', 'Datos del inquilino actualizados.');
+    }
+
+    /**
+     * Historial de un inquilino: todas sus asignaciones (residencias
+     * pasadas y activa) junto con los pagos de cada una.
+     */
+    public function historial($id)
+    {
+        $inquilino = Usuario::where('rol', 'inquilino')->findOrFail($id);
+
+        $asignaciones = Asignacion::where('usuario_id', $id)
+            ->with(['habitacion.propiedad', 'propiedad', 'pagos'])
+            ->orderByDesc('fecha_inicio')
+            ->get();
+
+        return view($this->esEncargado() ? 'Encargado.historial-inquilino' : 'Propietario.historial-inquilino', compact('inquilino', 'asignaciones'));
     }
 
     public function destroyInquilino($id)

@@ -58,6 +58,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/inquilino/{id}/editar', [InquilinoController::class, 'editInquilino'])->name('admin.edit-inquilino');
         Route::put('/inquilino/{id}', [InquilinoController::class, 'updateInquilino'])->name('admin.update-inquilino');
         Route::delete('/inquilino/{id}', [InquilinoController::class, 'destroyInquilino'])->name('admin.destroy-inquilino');
+        Route::get('/inquilino/{id}/historial', [InquilinoController::class, 'historial'])->name('admin.historial-inquilino');
 
         // Pagos: listado, alta manual, edición, cambio rápido de estado y baja.
         Route::get('/pagos', [PagoController::class, 'pagos'])->name('admin.pagos');

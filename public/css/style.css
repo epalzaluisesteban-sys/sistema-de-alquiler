@@ -13,6 +13,54 @@ body {
     color: #f3f4f6;
 }
 
+/* Tooltip (usado por la directiva @tooltip / @endtooltip) */
+.tooltip-wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.tooltip-wrap::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(17, 24, 24, 0.95);
+    color: #f3f4f6;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: normal;
+    text-transform: none;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.tooltip-wrap::before {
+    content: '';
+    position: absolute;
+    bottom: 118%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(17, 24, 24, 0.95);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.tooltip-wrap:hover::after,
+.tooltip-wrap:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* Efecto Vidrio (Glassmorphism) */
 .glass-panel {
     background: #1231269f;

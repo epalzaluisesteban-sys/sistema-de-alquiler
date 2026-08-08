@@ -57,16 +57,32 @@
                                 @endif
                             </td>
                             <td style="padding: 12px; text-align: center; display: flex; justify-content: center; gap: 15px;">
-                                <a href="{{ route('admin.edit-inquilino', $inquilino->id) }}" style="color: #86EFAC; text-decoration: none;" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form action="{{ route('admin.destroy-inquilino', $inquilino->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar a este inquilino?');" style="display: inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" style="background: none; border: none; color: #ff6b6b; cursor: pointer;">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </form>
+                                @if($asignacion)
+                                    <x-tooltip texto="Registrar pago">
+                                        <a href="{{ route('admin.nuevo-pago', ['asignacion' => $asignacion->id]) }}" style="color: #7DD3FC; text-decoration: none;">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </a>
+                                    </x-tooltip>
+                                @endif
+                                <x-tooltip texto="Ver historial">
+                                    <a href="{{ route('admin.historial-inquilino', $inquilino->id) }}" style="color: #FCD34D; text-decoration: none;">
+                                        <i class="fas fa-clock-rotate-left"></i>
+                                    </a>
+                                </x-tooltip>
+                                <x-tooltip texto="Editar">
+                                    <a href="{{ route('admin.edit-inquilino', $inquilino->id) }}" style="color: #86EFAC; text-decoration: none;">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </x-tooltip>
+                                <x-tooltip texto="Eliminar">
+                                    <form action="{{ route('admin.destroy-inquilino', $inquilino->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar a este inquilino?');" style="display: inline;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" style="background: none; border: none; color: #ff6b6b; cursor: pointer;">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </x-tooltip>
                             </td>
                         </tr>
                         @endforeach

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @mixin IdeHelperUsuario
@@ -140,6 +141,12 @@ class Usuario extends Authenticatable
     public function asignaciones(): HasMany
     {
         return $this->hasMany(Asignacion::class);
+    }
+
+    // extiende: Usuario 1 --- 1 Inquilino (solo presente si rol = 'inquilino')
+    public function inquilino(): HasOne
+    {
+        return $this->hasOne(Inquilino::class);
     }
 
     // Helpers de rol basados en la columna cruda 'rol' (no en el accessor 'role').

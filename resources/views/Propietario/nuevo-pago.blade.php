@@ -42,7 +42,7 @@
                         <select name="asignacion_id" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);" required>
                             <option value="">-- Seleccione --</option>
                             @foreach($asignaciones as $asignacion)
-                                <option value="{{ $asignacion->id }}" @selected((int) old('asignacion_id') === $asignacion->id)>
+                                <option value="{{ $asignacion->id }}" @selected((int) old('asignacion_id', $preseleccionada) === $asignacion->id)>
                                     {{ $asignacion->usuario?->name }} —
                                     @if($asignacion->habitacion)
                                         Hab. {{ $asignacion->habitacion->numero }} ({{ $asignacion->habitacion->propiedad?->nombre }})
