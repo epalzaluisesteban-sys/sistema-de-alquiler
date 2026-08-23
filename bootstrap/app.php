@@ -15,6 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
         ]);
+
+        // Confía en el proxy de ngrok (y similares) para que Laravel detecte
+        // el esquema real (https) a partir del header X-Forwarded-Proto y no
+        // genere URLs http:// para asset()/url() que el navegador bloquea
+        // por contenido mixto cuando el sitio se sirve por https vía túnel.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

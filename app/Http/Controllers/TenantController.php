@@ -7,6 +7,7 @@ use App\Models\Pago;
 use App\Models\Reporte;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class TenantController extends Controller
 {
@@ -120,5 +121,46 @@ class TenantController extends Controller
         ]);
 
         return redirect()->route('tenant.reportes')->with('success', 'Reporte enviado correctamente.');
+    }
+
+    public function ajustes()
+    {
+        return view('Inquilino.ajustes', ['usuario' => Auth::user()]);
+    }
+
+    public function updateAjustes(Request $request)
+    {
+        $usuario = Auth::user();
+
+        $request->validate([
+            'nombre' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+            'apellido' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+            'telefono' => ['nullable', 'string', 'max:25', 'regex:/^\+\d{1,4}\s\d{6,15}$/'],
+            'password_actual' => ['required_with:password', 'string'],
+            'password' => ['nullable', 'string', 'min:6', 'confirmed'],
+        ], [
+            'nombre.regex' => 'El nombre solo puede contener letras.',
+            'apellido.regex' => 'El apellido solo puede contener letras.',
+            'telefono.regex' => 'El teléfono debe incluir el prefijo del país y solo números, ej. +58 4121234567.',
+            'password_actual.required_with' => 'Debes ingresar tu contraseña actual para establecer una nueva.',
+        ]);
+
+        if ($request->filled('password') && ! Hash::check($request->password_actual, $usuario->contrasena)) {
+            return back()->withErrors(['password_actual' => 'La contraseña actual no es correcta.'])->withInput();
+        }
+
+        $data = [
+            'nombre' => $request->nombre,
+            'apellido' => $request->apellido,
+            'telefono' => $request->telefono,
+        ];
+
+        if ($request->filled('password')) {
+            $data['password'] = $request->password;
+        }
+
+        $usuario->update($data);
+
+        return redirect()->route('tenant.ajustes')->with('success', 'Ajustes actualizados correctamente.');
     }
 }

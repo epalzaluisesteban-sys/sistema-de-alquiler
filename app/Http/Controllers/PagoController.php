@@ -2,15 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\EsEncargado;
 use App\Models\Asignacion;
 use App\Models\Pago;
 use Illuminate\Http\Request;
 
 class PagoController extends Controller
 {
-    use EsEncargado;
-
     public function pagos(Request $request)
     {
         $estado = $request->query('estado');
@@ -52,7 +49,7 @@ class PagoController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view($this->esEncargado() ? 'Encargado.pagos' : 'Propietario.pagos', compact('pagos', 'estado', 'q', 'desde', 'hasta'));
+        return view('panel.pagos', compact('pagos', 'estado', 'q', 'desde', 'hasta'));
     }
 
     public function nuevoPago(Request $request)
@@ -65,7 +62,7 @@ class PagoController extends Controller
         // Inquilinos con la asignación de ese inquilino ya preseleccionada.
         $preseleccionada = $request->query('asignacion');
 
-        return view($this->esEncargado() ? 'Encargado.nuevo-pago' : 'Propietario.nuevo-pago', compact('asignaciones', 'preseleccionada'));
+        return view('panel.nuevo-pago', compact('asignaciones', 'preseleccionada'));
     }
 
     public function storePago(Request $request)
@@ -91,7 +88,7 @@ class PagoController extends Controller
             ->with(['usuario', 'habitacion.propiedad', 'propiedad'])
             ->get();
 
-        return view($this->esEncargado() ? 'Encargado.editar-pago' : 'Propietario.editar-pago', compact('pago', 'asignaciones'));
+        return view('panel.editar-pago', compact('pago', 'asignaciones'));
     }
 
     public function updatePago(Request $request, $id)

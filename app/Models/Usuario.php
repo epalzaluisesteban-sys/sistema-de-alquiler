@@ -33,6 +33,11 @@ class Usuario extends Authenticatable
         'name',
         'password',
         'role',
+        'tema_fondo',
+        'tema_color',
+        'tema_fuente',
+        'tema_boton',
+        'precio_habitacion',
     ];
 
     // Oculta la contraseña hasheada al serializar el modelo (por ejemplo en respuestas JSON).
@@ -45,11 +50,16 @@ class Usuario extends Authenticatable
         'updated_at' => 'datetime',
     ];
 
-    // Le dice a Laravel que el login se hace por 'cedula', no por 'email'.
-    public function getAuthIdentifierName(): string
-    {
-        return 'cedula';
-    }
+    // Nota: NO se sobreescribe getAuthIdentifierName() a 'cedula'. El login
+    // por cédula funciona igual porque LoginController::login llama
+    // Auth::attempt(['cedula' => ..., 'password' => ...]), que compara ese
+    // arreglo de credenciales directamente y no depende de este método.
+    // getAuthIdentifierName() sí lo usa Laravel para guardar el identificador
+    // del usuario logueado (Auth::id(), columna sessions.user_id, etc.);
+    // sobreescribirlo a 'cedula' hacía que se intentara guardar un texto
+    // como 'V-32267986' en sessions.user_id (columna entera) y tronaba en
+    // cuanto la cédula dejó de ser solo dígitos. Se deja el 'id' real
+    // (comportamiento por defecto) para esos usos internos.
 
     // Laravel llama esto internamente para comparar la contraseña en
     // Auth::attempt(); apunta a la columna real 'contrasena'.

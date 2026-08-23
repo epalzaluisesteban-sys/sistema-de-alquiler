@@ -17,12 +17,13 @@ class Habitacion extends Model
     protected $table = 'habitaciones';
 
     // Datos de una habitación dentro de una propiedad: a qué propiedad
-    // pertenece, su número/identificador, precio de alquiler y estado
-    // (Disponible/Ocupada/Mantenimiento).
+    // pertenece, su número/identificador y estado
+    // (Disponible/Ocupada/Mantenimiento). El precio no se guarda aquí
+    // (ver getPrecioActualAttribute): siempre se lee en vivo desde
+    // usuarios.precio_habitacion.
     protected $fillable = [
         'propiedad_id',
         'numero',
-        'precio',
         'estado',
     ];
 
@@ -36,5 +37,13 @@ class Habitacion extends Model
     public function asignaciones(): HasMany
     {
         return $this->hasMany(Asignacion::class);
+    }
+
+    // Precio vigente de la habitación: siempre el definido en Ajustes por
+    // el propietario dueño de la propiedad, para que un cambio ahí se
+    // refleje de inmediato en todas las habitaciones existentes.
+    public function getPrecioActualAttribute(): ?float
+    {
+        return $this->propiedad?->usuario?->precio_habitacion;
     }
 }

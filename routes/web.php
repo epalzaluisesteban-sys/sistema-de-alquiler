@@ -74,6 +74,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/notificaciones', [DashboardController::class, 'notificaciones'])->name('admin.notificaciones');
         Route::patch('/reportes/{id}/estado', [ReporteController::class, 'quickUpdateEstadoReporte'])->name('admin.reportes.quick-estado');
 
+        // Ajustes: edición del perfil propio (nombre, teléfono, contraseña),
+        // disponible tanto para Propietario como para Encargado.
+        Route::get('/ajustes', [DashboardController::class, 'ajustes'])->name('admin.ajustes');
+        Route::put('/ajustes', [DashboardController::class, 'updateAjustes'])->name('admin.update-ajustes');
+        Route::put('/ajustes/personalizacion', [DashboardController::class, 'updatePersonalizacion'])->name('admin.update-personalizacion');
+        Route::put('/ajustes/precio-habitacion', [DashboardController::class, 'updatePrecioHabitacion'])->name('admin.update-precio-habitacion');
+
         // Gestión de Encargados, Propiedades y Habitaciones: exclusiva del
         // Propietario (dueño). Middleware anidado 'role:admin' porque, a
         // diferencia del resto de este grupo, el Encargado no puede entrar aquí.
@@ -94,13 +101,11 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/propiedades/{id}', [PropiedadController::class, 'updatePropiedad'])->name('admin.update-propiedad');
             Route::delete('/propiedades/{id}', [PropiedadController::class, 'destroyPropiedad'])->name('admin.destroy-propiedad');
 
-            // Habitaciones: alta, edición y baja de habitaciones dentro de una propiedad.
+            // Habitaciones: listado y cambio de estado inline. El alta ya no
+            // es manual: se generan automáticamente al crear/editar una
+            // Propiedad tipo "habitaciones" (ver PropiedadController).
             Route::get('/habitaciones', [HabitacionController::class, 'habitaciones'])->name('admin.habitaciones');
-            Route::get('/habitaciones/nueva', [HabitacionController::class, 'nuevaHabitacion'])->name('admin.nueva-habitacion');
-            Route::post('/habitaciones', [HabitacionController::class, 'storeHabitacion'])->name('admin.store-habitacion');
-            Route::get('/habitaciones/{id}/editar', [HabitacionController::class, 'editHabitacion'])->name('admin.edit-habitacion');
-            Route::put('/habitaciones/{id}', [HabitacionController::class, 'updateHabitacion'])->name('admin.update-habitacion');
-            Route::delete('/habitaciones/{id}', [HabitacionController::class, 'destroyHabitacion'])->name('admin.destroy-habitacion');
+            Route::put('/habitaciones/{id}/estado', [HabitacionController::class, 'updateEstado'])->name('admin.update-estado-habitacion');
         });
     });
 
@@ -130,6 +135,12 @@ Route::middleware(['auth'])->group(function () {
         // nuevo reporte de problema en la habitación/propiedad.
         Route::get('/reportes', [TenantController::class, 'reportes'])->name('tenant.reportes');
         Route::post('/reportes', [TenantController::class, 'storeReporte'])->name('tenant.store-reporte');
+
+        // Ajustes: edición del perfil propio del inquilino (nombre, teléfono,
+        // contraseña). Vista y controlador separados de los de admin/encargado
+        // porque el contenido de ajustes varía según el rol.
+        Route::get('/ajustes', [TenantController::class, 'ajustes'])->name('tenant.ajustes');
+        Route::put('/ajustes', [TenantController::class, 'updateAjustes'])->name('tenant.update-ajustes');
     });
 
 });

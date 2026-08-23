@@ -2,12 +2,17 @@
     $esAdmin = strtolower(trim(auth()->user()->role ?? '')) === 'admin';
 @endphp
 <aside class="sidebar glass-panel" id="sidebar">
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <img src="{{ asset('imagen/tl.png') }}" alt="Logo" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
-        <div>
-            <h2 style="margin: 0;">{{ $esAdmin ? 'Panel Propietario' : 'Panel Encargado' }}</h2>
-            <p style="margin: 4px 0 0 0; font-family: inherit; font-weight: normal; opacity: 0.8;">{{ auth()->user()->name }}</p>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="{{ asset('imagen/tl.png') }}" alt="Logo" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+            <div>
+                <h2 style="margin: 0;">{{ $esAdmin ? 'Panel Propietario' : 'Panel Encargado' }}</h2>
+                <p style="margin: 4px 0 0 0; font-family: inherit; font-weight: normal; opacity: 0.8;">{{ auth()->user()->name }}</p>
+            </div>
         </div>
+        <a href="{{ route('admin.ajustes') }}" class="settings-gear-inline" title="Ajustes">
+            <i class="fas fa-gear"></i>
+        </a>
     </div>
     <hr style="border-color: rgba(255,255,255,0.2);">
     <a href="{{ route('admin.dashboard') }}"><i class="fas fa-chart-line"></i> Resumen</a>
@@ -27,4 +32,4 @@
     <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
         @csrf
     </form>
-</aside>
+</aside> 

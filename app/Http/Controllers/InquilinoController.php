@@ -2,73 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\EsEncargado;
+use App\Http\Controllers\Concerns\AsignaResidencia;
 use App\Models\Asignacion;
 use App\Models\Habitacion;
 use App\Models\Inquilino;
+use App\Models\Pago;
 use App\Models\Propiedad;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
 
 class InquilinoController extends Controller
 {
-    use EsEncargado;
-
-    /**
-     * Crea la Asignacion que liga a un inquilino con una Propiedad completa ("Casa")
-     * o con una Habitacion puntual, y marca esa residencia como ocupada.
-     */
-    private function asignarResidencia(Usuario $usuario, string $tipo, int $id): void
-    {
-        if ($tipo === 'Casa') {
-            $propiedad = Propiedad::find($id);
-
-            if (! $propiedad) {
-                return;
-            }
-
-            Asignacion::create([
-                'usuario_id' => $usuario->id,
-                'propiedad_id' => $propiedad->id,
-                'fecha_inicio' => now()->toDateString(),
-                'estado_asignacion' => 'activo',
-            ]);
-
-            $propiedad->update(['estado' => 'ocupada']);
-
-            return;
-        }
-
-        $habitacion = Habitacion::find($id);
-
-        if (! $habitacion) {
-            return;
-        }
-
-        Asignacion::create([
-            'usuario_id' => $usuario->id,
-            'habitacion_id' => $habitacion->id,
-            'fecha_inicio' => now()->toDateString(),
-            'estado_asignacion' => 'activo',
-        ]);
-
-        $habitacion->update(['estado' => 'ocupada']);
-    }
-
-    /**
-     * Cierra una Asignacion activa y libera (vuelve a "disponible") la
-     * Habitacion o Propiedad que tenía ocupada.
-     */
-    private function liberarAsignacion(Asignacion $asignacion): void
-    {
-        $asignacion->habitacion?->update(['estado' => 'disponible']);
-        $asignacion->propiedad?->update(['estado' => 'disponible']);
-
-        $asignacion->update([
-            'estado_asignacion' => 'finalizada',
-            'fecha_fin' => now()->toDateString(),
-        ]);
-    }
+    use AsignaResidencia;
 
     public function inquilinos()
     {
@@ -81,28 +26,66 @@ class InquilinoController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        return view($this->esEncargado() ? 'Encargado.inquilinos' : 'Propietario.inquilinos', compact('inquilinos'));
+        return view('panel.inquilinos', compact('inquilinos'));
     }
 
-    public function nuevoInquilino()
+    public function nuevoInquilino(Request $request)
     {
-        $properties = Propiedad::where('estado', 'disponible')->orderBy('nombre')->get();
-        $rooms = Habitacion::where('estado', 'disponible')->with('propiedad')->orderBy('numero')->get();
+        // Solo propiedades sin habitaciones se pueden alquilar como "Casa"
+        // completa; las que tienen habitaciones se alquilan por habitación.
+        $properties = Propiedad::where('estado', 'disponible')->doesntHave('habitaciones')->orderBy('nombre')->get();
+        $rooms = Habitacion::where('estado', 'disponible')->with('propiedad.usuario')->orderBy('numero')->get();
 
-        return view($this->esEncargado() ? 'Encargado.nuevo-inquilino' : 'Propietario.nuevo-inquilino', compact('properties', 'rooms'));
+        // Preselección al llegar desde la tabla de habitaciones (click en
+        // una habitación "disponible"). Si ya no está disponible, se
+        // ignora silenciosamente.
+        $habitacionPreseleccionada = $request->filled('habitacion_id')
+            ? $rooms->firstWhere('id', (int) $request->habitacion_id)
+            : null;
+
+        // Preselección al llegar desde la tabla "Casa Entera" de propiedades
+        // (click en una propiedad "disponible"). Si ya no está disponible,
+        // se ignora silenciosamente.
+        $propiedadPreseleccionada = $request->filled('propiedad_id')
+            ? $properties->firstWhere('id', (int) $request->propiedad_id)
+            : null;
+
+        return view('panel.nuevo-inquilino', compact('properties', 'rooms', 'habitacionPreseleccionada', 'propiedadPreseleccionada'));
     }
 
     public function storeInquilino(Request $request)
     {
         $request->validate([
-            'nombre' => ['required', 'string', 'max:255'],
-            'apellido' => ['required', 'string', 'max:255'],
-            'cedula' => ['required', 'string', 'max:20', 'unique:usuarios,cedula'],
+            'nombre' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+            'apellido' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+            'cedula' => ['required', 'string', 'max:20', 'regex:/^[VE]-\d{6,9}$/', 'unique:usuarios,cedula'],
             'password' => ['required', 'string', 'min:6'],
-            'telefono' => ['nullable', 'string', 'max:20'],
+            'telefono' => ['nullable', 'string', 'max:25', 'regex:/^\+\d{1,4}\s\d{6,15}$/'],
             'rental_type' => ['required', 'in:Casa,Habitación'],
             'property_id' => ['required', 'integer'],
+            'fecha_inicio' => ['required', 'date'],
+            'fecha_fin' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
+        ], [
+            'nombre.regex' => 'El nombre solo puede contener letras.',
+            'apellido.regex' => 'El apellido solo puede contener letras.',
+            'cedula.regex' => 'La cédula debe tener el formato V-12345678 (venezolano) o E-12345678 (extranjero).',
+            'telefono.regex' => 'El teléfono debe incluir el prefijo del país y solo números, ej. +58 4121234567.',
         ]);
+
+        // El precio no se pide en este formulario: para "Casa" se toma el
+        // precio acordado de la propiedad, para "Habitación" el precio
+        // definido globalmente en Ajustes (ya guardado en la habitación).
+        $precio = $request->rental_type === 'Casa'
+            ? Propiedad::find($request->property_id)?->precio_acordado
+            : Habitacion::find($request->property_id)?->precio_actual;
+
+        if ($precio === null) {
+            return back()->withInput()->withErrors([
+                'property_id' => $request->rental_type === 'Casa'
+                    ? 'Esta propiedad no tiene un precio acordado. Configúralo en Editar Propiedad.'
+                    : 'Esta habitación no tiene precio. Configúralo en Ajustes › Precio de Habitación.',
+            ]);
+        }
 
         $user = Usuario::create([
             'nombre' => $request->nombre,
@@ -115,7 +98,23 @@ class InquilinoController extends Controller
 
         Inquilino::create(['usuario_id' => $user->id]);
 
-        $this->asignarResidencia($user, $request->rental_type, (int) $request->property_id);
+        $asignacion = $this->asignarResidencia(
+            $user,
+            $request->rental_type,
+            (int) $request->property_id,
+            (float) $precio,
+            $request->fecha_inicio,
+            $request->fecha_fin
+        );
+
+        if ($asignacion) {
+            Pago::create([
+                'asignacion_id' => $asignacion->id,
+                'monto' => $precio,
+                'fecha' => $request->fecha_inicio,
+                'estado_pago' => 'pendiente',
+            ]);
+        }
 
         return redirect()->route('admin.inquilinos')->with('success', 'Inquilino registrado con éxito.');
     }
@@ -140,7 +139,7 @@ class InquilinoController extends Controller
             ->orderBy('numero')
             ->get();
 
-        return view($this->esEncargado() ? 'Encargado.editar-inquilino' : 'Propietario.editar-inquilino', compact('inquilino', 'asignacionActiva', 'properties', 'rooms'));
+        return view('panel.editar-inquilino', compact('inquilino', 'asignacionActiva', 'properties', 'rooms'));
     }
 
     public function updateInquilino(Request $request, $id)
@@ -148,13 +147,18 @@ class InquilinoController extends Controller
         $inquilino = Usuario::findOrFail($id);
 
         $request->validate([
-            'nombre' => ['required', 'string', 'max:255'],
-            'apellido' => ['required', 'string', 'max:255'],
-            'cedula' => ['required', 'string', 'max:20', 'unique:usuarios,cedula,' . $id],
+            'nombre' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+            'apellido' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+            'cedula' => ['required', 'string', 'max:20', 'regex:/^[VE]-\d{6,9}$/', 'unique:usuarios,cedula,' . $id],
             'password' => ['nullable', 'string', 'min:6'],
-            'telefono' => ['nullable', 'string', 'max:20'],
+            'telefono' => ['nullable', 'string', 'max:25', 'regex:/^\+\d{1,4}\s\d{6,15}$/'],
             'rental_type' => ['nullable', 'in:Casa,Habitación'],
             'property_id' => ['nullable', 'integer'],
+        ], [
+            'nombre.regex' => 'El nombre solo puede contener letras.',
+            'apellido.regex' => 'El apellido solo puede contener letras.',
+            'cedula.regex' => 'La cédula debe tener el formato V-12345678 (venezolano) o E-12345678 (extranjero).',
+            'telefono.regex' => 'El teléfono debe incluir el prefijo del país y solo números, ej. +58 4121234567.',
         ]);
 
         $data = [
@@ -209,7 +213,7 @@ class InquilinoController extends Controller
             ->orderByDesc('fecha_inicio')
             ->get();
 
-        return view($this->esEncargado() ? 'Encargado.historial-inquilino' : 'Propietario.historial-inquilino', compact('inquilino', 'asignaciones'));
+        return view('panel.historial-inquilino', compact('inquilino', 'asignaciones'));
     }
 
     public function destroyInquilino($id)

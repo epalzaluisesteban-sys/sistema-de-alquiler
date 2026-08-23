@@ -39,7 +39,7 @@ There is no linter/formatter configured beyond `laravel/pint` (dev dependency); 
 
 Auth does **not** use the default `users` table/model. The auth model is `App\Models\Usuario` (table `usuarios`), configured as the `users` provider's model in `config/auth.php`. Key non-standard bits on `Usuario` ([app/Models/Usuario.php](app/Models/Usuario.php)):
 
-- Login identifier is `cedula` (national ID), not email — `getAuthIdentifierName()` returns `'cedula'`.
+- Login identifier is `cedula` (national ID), not email. Login goes through `LoginController::login` calling `Auth::attempt(['cedula' => ..., 'password' => ...])`, which matches the credentials array directly against columns — it does **not** need `getAuthIdentifierName()` overridden. `Usuario` deliberately does **not** override `getAuthIdentifierName()`/`getAuthIdentifier()`: they were once overridden to return `'cedula'`, which made Laravel try to store the cedula string (e.g. `V-12345678`) in `sessions.user_id` (an integer FK column) and `Auth::id()`, breaking as soon as a cedula contained non-digit characters. Keep these on the default (`id`, the real PK).
 - The real password column is `contrasena`; `getAuthPassword()` returns it. A `password` virtual attribute (mutator/accessor) exists for compatibility — **always assign via `'password' => ...'` when creating/updating a Usuario so the value gets hashed**; assigning `'contrasena'` directly bypasses hashing and stores plaintext.
 - `name`/`nombre`+`apellido` similarly have virtual-attribute glue (`getNameAttribute`/`setNameAttribute` split/join `name` into `nombre`+`apellido`).
 - The raw DB column is `rol` (enum: `propietario`, `encargado`, `inquilino`). The `role` virtual attribute maps DB values to app-facing role strings: `propietario → admin`, `encargado → encargado`, `inquilino → tenant`. Middleware, `LoginController`, and route redirects all check against the *mapped* values (`admin`/`encargado`/`tenant`), not the raw `rol` column.
@@ -50,7 +50,7 @@ Three roles: **Propietario** (owner, mapped role `admin`), **Encargado** (manage
 
 - `App\Http\Middleware\CheckRole` (alias `role`, registered in [bootstrap/app.php](bootstrap/app.php)) takes a variadic list of allowed roles, e.g. `role:admin,encargado`. It compares against the mapped `role` attribute, not `rol`.
 - In [routes/web.php](routes/web.php), the `admin` route group (prefix `/admin`) is shared by Propietario and Encargado (`role:admin,encargado`); a nested inner group restricted to `role:admin` guards Encargado-management routes (`admin.nuevo-admin`, `admin.store-admin`, `admin.destroy-admin`) since only the owner may create/remove managers. The `residente`-prefixed group (`role:tenant`) is Inquilino-only.
-- The `admin.*` route group is backed by domain-specific controllers — `DashboardController`, `InquilinoController`, `PropiedadController`, `HabitacionController`, `EncargadoController`, `PagoController` — shared by **both** Propietario and Encargado. Each picks between `resources/views/Propietario/*` and `resources/views/Encargado/*` blade views at runtime based on the authenticated user's mapped role, via the `esEncargado()` method pulled in from the `App\Http\Controllers\Concerns\EsEncargado` trait.
+- The `admin.*` route group is backed by domain-specific controllers — `DashboardController`, `InquilinoController`, `PropiedadController`, `HabitacionController`, `EncargadoController`, `PagoController` — shared by **both** Propietario and Encargado. Since Propietario and Encargado see identical markup for dashboard/inquilinos/pagos/notificaciones, those controllers render a single shared view under `resources/views/panel/*` for both roles (no per-role branching). The sidebar itself (`resources/views/partials/panel-propietario.blade.php`) still toggles a couple of owner-only links internally based on `auth()->user()->role`. Encargado-management and Propiedad/Habitacion CRUD views (owner-only, `role:admin`) live under `resources/views/Propietario/*`.
 - `App\Http\Controllers\TenantController` backs the `tenant.*` routes and renders `resources/views/Inquilino/*`.
 - `App\Http\Controllers\LoginController::login` authenticates via `Auth::attempt(['cedula' => ..., 'password' => ...])` and redirects based on the mapped role: `admin`/`encargado` → `admin.dashboard`, `tenant` → `tenant.dashboard`. Any other/missing role logs the user back out.
 
@@ -66,7 +66,18 @@ Note: the `App\Models\Propiedad` class lives in `app/Models/Propiedad.php` — t
 
 ### Views
 
-Blade views are organized per role under `resources/views/{Propietario,Encargado,Inquilino}/` plus `resources/views/auth/login.blade.php`. No layout/component system is used — each view is a full standalone HTML document; sidebars are copy-pasted per view rather than extracted into a shared partial.
+Two shared layouts hold the HTML shell (doctype/head/scripts) so it isn't repeated per page:
+
+- `resources/views/layouts/panel.blade.php` — used by the admin/encargado panel. Includes the sidebar partial (`partials/panel-propietario`) and the success-flash alert; pages `@extend` it and fill `@section('content')` (and optionally `@section('title')` / `@push('scripts')`).
+- `resources/views/layouts/tenant.blade.php` — used by the Inquilino panel. Includes the success/error flash alerts; pages `@extend` it the same way.
+
+View locations:
+- `resources/views/panel/*.blade.php` — dashboard/inquilinos/pagos/notificaciones/editar-inquilino/editar-pago/historial-inquilino/nuevo-inquilino/nuevo-pago, rendered identically for Propietario and Encargado.
+- `resources/views/Propietario/*.blade.php` — owner-only CRUD for propiedades, habitaciones, and encargados (routes gated `role:admin`).
+- `resources/views/Inquilino/*.blade.php` — tenant views, on the `tenant` layout.
+- `resources/views/auth/login.blade.php` — standalone, not on either layout.
+
+When adding a new admin-panel page shared by Propietario and Encargado, put it under `resources/views/panel/` and extend `layouts.panel`; don't reintroduce per-role view pairs.
 
 
 # Idioma

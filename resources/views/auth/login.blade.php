@@ -6,7 +6,6 @@
     <title>Iniciar sesión</title>
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <link rel="icon" href="{{ asset('imagen/tl.png') }}">
-    @vite(['public/css/style.css', 'resources/js/app.js'])
     
 </head>
 <body>
@@ -26,7 +25,14 @@
             @csrf
             <div class="form-group">
                 <label>Cédula</label>
-                <input type="text" name="cedula" class="form-input" required>
+                <div class="form-row" style="gap: 10px;">
+                    <select id="cedula-tipo" class="form-input" style="flex: 0 0 90px;" required>
+                        <option value="V">V</option>
+                        <option value="E">E</option>
+                    </select>
+                    <input type="text" id="cedula-numero" class="form-input" inputmode="numeric" maxlength="9" placeholder="Ej. 12345678" style="flex: 1;" required>
+                </div>
+                <input type="hidden" name="cedula" id="cedula" value="{{ old('cedula') }}">
             </div>
 
             <div class="form-group">
@@ -48,6 +54,32 @@
             boton.disabled = true;
             boton.textContent = 'Iniciando sesión...';
         });
+
+        // Cédula: V/E + solo números, combinados en el campo oculto "cedula"
+        const cedulaTipo = document.getElementById('cedula-tipo');
+        const cedulaNumero = document.getElementById('cedula-numero');
+        const cedulaHidden = document.getElementById('cedula');
+
+        function actualizarCedula() {
+            cedulaHidden.value = cedulaNumero.value ? (cedulaTipo.value + '-' + cedulaNumero.value) : '';
+        }
+
+        cedulaNumero.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '');
+            actualizarCedula();
+        });
+        cedulaTipo.addEventListener('change', actualizarCedula);
+
+        if (cedulaHidden.value) {
+            const match = cedulaHidden.value.match(/^([VE])-(\d+)$/);
+            if (match) {
+                cedulaTipo.value = match[1];
+                cedulaNumero.value = match[2];
+            } else {
+                cedulaNumero.value = cedulaHidden.value.replace(/\D/g, '');
+            }
+        }
+        actualizarCedula();
 
         document.getElementById('toggle-password').addEventListener('click', function () {
             const input = document.getElementById('password');

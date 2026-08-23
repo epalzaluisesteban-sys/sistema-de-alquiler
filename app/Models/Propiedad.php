@@ -24,6 +24,9 @@ class Propiedad extends Model
         'nombre',
         'descripcion',
         'estado',
+        'precio_acordado',
+        'tipo',
+        'cantidad_habitaciones',
     ];
 
     // registra: Propiedad N --- 1 Usuario (el dueño/propietario de esta propiedad)

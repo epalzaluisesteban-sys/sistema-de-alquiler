@@ -25,6 +25,7 @@ class Asignacion extends Model
         'usuario_id',
         'habitacion_id',
         'propiedad_id',
+        'precio',
         'fecha_inicio',
         'fecha_fin',
         'estado_asignacion',
@@ -33,6 +34,7 @@ class Asignacion extends Model
     protected $casts = [
         'fecha_inicio' => 'date',
         'fecha_fin' => 'date',
+        'precio' => 'decimal:2',
     ];
 
     // ocupa: Asignacion N --- 1 Usuario (el inquilino de este alquiler)
