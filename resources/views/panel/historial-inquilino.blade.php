@@ -53,7 +53,7 @@
                         @foreach($asignacion->pagos as $pago)
                             <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                                 <td>{{ $pago->fecha?->format('d/m/Y') }}</td>
-                                <td>${{ number_format($pago->monto, 2) }}</td>
+                                <td>{{ $pago->monto_formateado }}</td>
                                 <td style="text-transform: capitalize;">{{ $pago->estado_pago }}</td>
                             </tr>
                         @endforeach

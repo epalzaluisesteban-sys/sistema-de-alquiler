@@ -61,7 +61,7 @@
                         @endif
                         <span style="float: right; opacity: 0.8; font-size: 0.85rem;">{{ $pago->fecha?->format('d/m/Y') }}</span>
                     </p>
-                    <p style="margin: 0 0 5px 0;">Monto: ${{ number_format($pago->monto, 2) }}</p>
+                    <p style="margin: 0 0 5px 0;">Monto: {{ $pago->monto_formateado }}</p>
                     <span style="background: {{ $pago->estado_pago === 'notificado' ? '#f59e0b' : '#ef4444' }}; color: white; font-weight: 600; padding: 3px 8px; border-radius: 5px; font-size: 0.8rem;">
                         {{ $pago->estado_pago === 'notificado' ? 'Notificado por el inquilino' : 'Pendiente' }}
                     </span>

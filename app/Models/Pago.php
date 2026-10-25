@@ -32,6 +32,43 @@ class Pago extends Model
         'monto' => 'decimal:2',
     ];
 
+    // Monedas posibles de un pago y su símbolo. No hay columna 'moneda': se
+    // deriva 1:1 de tipo_pago (ver monedaDeTipo) para que no pueda quedar
+    // desincronizada de él.
+    public const MONEDAS = [
+        'USD' => '$',
+        'VES' => 'Bs.',
+    ];
+
+    // divisas → USD, pago_movil → VES. Un tipo_pago null (el pago pendiente
+    // que se genera al registrar un inquilino) se toma como USD porque su
+    // monto es el precio del alquiler, que se maneja en dólares.
+    public static function monedaDeTipo(?string $tipoPago): string
+    {
+        return $tipoPago === 'pago_movil' ? 'VES' : 'USD';
+    }
+
+    // Formatea un monto con el símbolo de su moneda: "$100.00" / "Bs. 100.00".
+    public static function formatearMonto(float|string|null $monto, string $moneda): string
+    {
+        $simbolo = self::MONEDAS[$moneda] ?? $moneda;
+        $separador = $moneda === 'USD' ? '' : ' ';
+
+        return $simbolo . $separador . number_format((float) $monto, 2);
+    }
+
+    // Accessor $pago->moneda ('USD' / 'VES').
+    public function getMonedaAttribute(): string
+    {
+        return self::monedaDeTipo($this->tipo_pago);
+    }
+
+    // Accessor $pago->monto_formateado, listo para pintar en las vistas.
+    public function getMontoFormateadoAttribute(): string
+    {
+        return self::formatearMonto($this->monto, $this->moneda);
+    }
+
     // genera: Pago N --- 1 Asignacion (cada pago pertenece a un único alquiler)
     public function asignacion(): BelongsTo
     {

@@ -32,7 +32,7 @@
                             —
                         @endif
                     </td>
-                    <td>${{ number_format($pago->monto, 2) }}</td>
+                    <td>{{ $pago->monto_formateado }}</td>
                     <td>{{ $pago->fecha?->format('d/m/Y') }}</td>
                     <td>
                         @php

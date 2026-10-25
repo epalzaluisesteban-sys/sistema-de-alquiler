@@ -15,10 +15,19 @@ class DashboardController extends Controller
     {
         $inquilinosActivos = Asignacion::porPropietario()->where('estado_asignacion', 'activo')->distinct('usuario_id')->count('usuario_id');
         $pagosPendientes = Pago::porPropietario()->whereIn('estado_pago', ['pendiente', 'notificado'])->count();
-        $ingresosMes = Pago::porPropietario()->where('estado_pago', 'confirmado')
+        // Ingresos separados por moneda (['USD' => x, 'VES' => y]): sumar
+        // monto sin distinguir tipo_pago mezclaría dólares con bolívares.
+        $ingresosMes = array_fill_keys(array_keys(Pago::MONEDAS), 0.0);
+
+        Pago::porPropietario()->where('estado_pago', 'confirmado')
             ->whereMonth('fecha', now()->month)
             ->whereYear('fecha', now()->year)
-            ->sum('monto');
+            ->selectRaw('tipo_pago, SUM(monto) as total')
+            ->groupBy('tipo_pago')
+            ->get()
+            ->each(function ($fila) use (&$ingresosMes) {
+                $ingresosMes[Pago::monedaDeTipo($fila->tipo_pago)] += (float) $fila->total;
+            });
 
         $ultimosMovimientos = Pago::porPropietario()
             ->with(['asignacion.usuario', 'asignacion.habitacion.propiedad', 'asignacion.propiedad'])

@@ -13,10 +13,12 @@
             <h3>{{ $pagosPendientes }}</h3>
             <p>Pagos Pendientes</p>
         </div>
+        @foreach($ingresosMes as $moneda => $total)
         <div class="stat-box glass-panel">
-            <h3>${{ number_format($ingresosMes, 2) }}</h3>
-            <p>Ingresos del Mes</p>
+            <h3>{{ \App\Models\Pago::formatearMonto($total, $moneda) }}</h3>
+            <p>Ingresos del Mes ({{ $moneda }})</p>
         </div>
+        @endforeach
     </div>
 
     <h3>Últimos Movimientos de {{ ucfirst(now()->translatedFormat('F Y')) }}</h3>
@@ -44,7 +46,7 @@
                             —
                         @endif
                     </td>
-                    <td>${{ number_format($pago->monto, 2) }}</td>
+                    <td>{{ $pago->monto_formateado }}</td>
                     <td>{{ $pago->fecha?->format('d/m/Y') }}</td>
                     <td>
                         @php
