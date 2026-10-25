@@ -18,6 +18,7 @@
         <button type="button" class="ajustes-tab @if($tabActiva === 'datos') is-active @endif" data-tab="datos"><i class="fas fa-user-edit"></i> Datos Personales</button>
         <button type="button" class="ajustes-tab @if($tabActiva === 'personalizacion') is-active @endif" data-tab="personalizacion"><i class="fas fa-palette"></i> Personalización</button>
         <button type="button" class="ajustes-tab @if($tabActiva === 'precio-habitacion') is-active @endif" data-tab="precio-habitacion"><i class="fas fa-tags"></i> Precio de Habitación</button>
+        <button type="button" class="ajustes-tab @if($tabActiva === 'historial-inquilinos') is-active @endif" data-tab="historial-inquilinos"><i class="fas fa-clock-rotate-left"></i> Historial de Inquilinos</button>
     </div>
 
     @if ($errors->any())
@@ -48,7 +49,7 @@
 
                 <div class="form-group">
                     <label><i class="fas fa-id-card"></i> Cédula</label>
-                    <div class="form-row" style="gap: 10px;">
+                    <div class="form-row form-row-fija" style="gap: 10px;">
                         <select id="cedula-tipo" style="flex: 0 0 90px;" required>
                             <option value="V">V</option>
                             <option value="E">E</option>
@@ -61,7 +62,7 @@
 
                 <div class="form-group">
                     <label><i class="fas fa-phone"></i> Teléfono de Contacto</label>
-                    <div class="form-row" style="gap: 10px;">
+                    <div class="form-row form-row-fija" style="gap: 10px;">
                         <select id="telefono-prefijo" style="flex: 0 0 170px;"></select>
                         <input type="text" id="telefono-numero" inputmode="numeric" maxlength="15" placeholder="Ej. 4121234567" style="flex: 1;">
                     </div>
@@ -174,6 +175,49 @@
                     <button type="submit" class="btn-glossy">Guardar Precio</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div class="ajustes-panel @if($tabActiva === 'historial-inquilinos') is-active @endif" data-panel="historial-inquilinos">
+        <div class="glass-panel" style="padding: 20px; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; color: #D1D5DB;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.137); text-align: left;">
+                        <th>Nombre</th>
+                        <th>Cédula</th>
+                        <th>Residencia Actual</th>
+                        <th>Residencias Registradas</th>
+                        <th style="text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($inquilinos as $inquilino)
+                    @php($asignacion = $inquilino->asignaciones->first())
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <td>{{ $inquilino->name }}</td>
+                        <td>{{ $inquilino->cedula ?? '—' }}</td>
+                        <td>
+                            @if($asignacion && $asignacion->habitacion)
+                                Hab. {{ $asignacion->habitacion->numero }} — {{ $asignacion->habitacion->propiedad?->nombre ?? 'Sin propiedad' }}
+                            @elseif($asignacion && $asignacion->propiedad)
+                                {{ $asignacion->propiedad->nombre }} (Casa completa)
+                            @else
+                                <span style="opacity: 0.7;">Sin residencia activa</span>
+                            @endif
+                        </td>
+                        <td>{{ $inquilino->asignaciones_count }}</td>
+                        <td style="text-align: center;">
+                            <a href="{{ route('admin.historial-inquilino', $inquilino->id) }}" style="color: #FCD34D; text-decoration: none;">
+                                <i class="fas fa-clock-rotate-left"></i> Ver historial
+                            </a>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            @if($inquilinos->isEmpty())
+                <p style="text-align: center; opacity: 0.8; margin-top: 20px;">No hay inquilinos registrados actualmente.</p>
+            @endif
         </div>
     </div>
 @endsection

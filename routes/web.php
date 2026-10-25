@@ -57,7 +57,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/nuevo-inquilino', [InquilinoController::class, 'storeInquilino'])->name('admin.store-inquilino');
         Route::get('/inquilino/{id}/editar', [InquilinoController::class, 'editInquilino'])->name('admin.edit-inquilino');
         Route::put('/inquilino/{id}', [InquilinoController::class, 'updateInquilino'])->name('admin.update-inquilino');
-        Route::delete('/inquilino/{id}', [InquilinoController::class, 'destroyInquilino'])->name('admin.destroy-inquilino');
+        Route::patch('/inquilino/{id}/desalojar', [InquilinoController::class, 'desalojarInquilino'])->name('admin.desalojar-inquilino');
         Route::get('/inquilino/{id}/historial', [InquilinoController::class, 'historial'])->name('admin.historial-inquilino');
 
         // Pagos: listado, alta manual, edición, cambio rápido de estado y baja.
@@ -91,7 +91,14 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/nuevo-encargado', [EncargadoController::class, 'storeEncargado'])->name('admin.store-encargado');
             Route::get('/encargado/{id}/editar', [EncargadoController::class, 'editEncargado'])->name('admin.edit-encargado');
             Route::put('/encargado/{id}', [EncargadoController::class, 'updateEncargado'])->name('admin.update-encargado');
-            Route::delete('/encargado/{id}', [EncargadoController::class, 'destroyEncargado'])->name('admin.destroy-encargado');
+            Route::patch('/encargado/{id}/desalojar', [EncargadoController::class, 'desalojarEncargado'])->name('admin.desalojar-encargado');
+
+            // Delegar: convierte a un inquilino ya registrado en encargado
+            // (mismo criterio que crear/eliminar encargados: solo el dueño).
+            Route::post('/inquilino/{id}/delegar-encargado', [EncargadoController::class, 'delegarInquilino'])->name('admin.delegar-encargado');
+
+            // Revertir: convierte a un encargado de vuelta en inquilino normal.
+            Route::post('/encargado/{id}/revertir-inquilino', [EncargadoController::class, 'revertirInquilino'])->name('admin.revertir-inquilino');
 
             // Propiedades: alta, edición y baja de propiedades del dueño.
             Route::get('/propiedades', [PropiedadController::class, 'propiedades'])->name('admin.propiedades');

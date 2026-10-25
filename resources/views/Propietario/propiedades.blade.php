@@ -13,11 +13,11 @@
         <table style="width: 100%; border-collapse: collapse; color: #D1D5DB;">
             <thead>
                 <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.137); text-align: left;">
-                    <th style="padding: 12px;">Nombre</th>
-                    <th style="padding: 12px;">Descripción</th>
-                    <th style="padding: 12px;">Habitaciones</th>
-                    <th style="padding: 12px;">Ocupación</th>
-                    <th style="padding: 12px; text-align: center;">Acciones</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Habitaciones</th>
+                    <th>Ocupación</th>
+                    <th style="text-align: center;">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -32,15 +32,19 @@
                                     : '#f59e0b'));
                     @endphp
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding: 12px;">{{ $propiedad->nombre }}</td>
-                    <td style="padding: 12px;">{{ $propiedad->descripcion ?? '—' }}</td>
-                    <td style="padding: 12px;">{{ $propiedad->habitaciones_count }}</td>
-                    <td style="padding: 12px;">
-                        <span style="background: {{ $colorOcupacion }}; color: white; font-weight: 600; padding: 4px 8px; border-radius: 5px; font-size: 0.8rem;">
-                            {{ $propiedad->habitaciones_ocupadas_count }}/{{ $propiedad->habitaciones_count }} ocupadas
-                        </span>
+                    <td>
+                        <a href="{{ route('admin.habitaciones', ['propiedad_id' => $propiedad->id]) }}" style="color: inherit; text-decoration: none;">{{ $propiedad->nombre }}</a>
                     </td>
-                    <td style="padding: 12px; text-align: center; display: flex; justify-content: center; gap: 15px;">
+                    <td>{{ $propiedad->descripcion ?? '—' }}</td>
+                    <td>{{ $propiedad->habitaciones_count }}</td>
+                    <td>
+                        <a href="{{ route('admin.habitaciones', ['propiedad_id' => $propiedad->id]) }}" style="text-decoration: none;">
+                            <span style="background: {{ $colorOcupacion }}; color: white; font-weight: 600; padding: 4px 8px; border-radius: 5px; font-size: 0.8rem;">
+                                {{ $propiedad->habitaciones_ocupadas_count }}/{{ $propiedad->habitaciones_count }} ocupadas
+                            </span>
+                        </a>
+                    </td>
+                    <td style="text-align: center; display: flex; justify-content: center; gap: 15px;">
                         <a href="{{ route('admin.edit-propiedad', $propiedad->id) }}" style="color: var(--accent-light); text-decoration: none;" title="Editar">
                             <i class="fas fa-edit"></i>
                         </a>
@@ -66,11 +70,11 @@
         <table style="width: 100%; border-collapse: collapse; color: #D1D5DB;">
             <thead>
                 <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.137); text-align: left;">
-                    <th style="padding: 12px;">Nombre</th>
-                    <th style="padding: 12px;">Descripción</th>
-                    <th style="padding: 12px;">Precio Acordado</th>
-                    <th style="padding: 12px;">Estado</th>
-                    <th style="padding: 12px; text-align: center;">Acciones</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Precio Acordado</th>
+                    <th>Estado</th>
+                    <th style="text-align: center;">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -84,21 +88,21 @@
                                 : null);
                     @endphp
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding: 12px;">
+                    <td>
                         @if($destino)
                             <a href="{{ $destino }}" style="color: inherit; text-decoration: none;">{{ $propiedad->nombre }}</a>
                         @else
                             {{ $propiedad->nombre }}
                         @endif
                     </td>
-                    <td style="padding: 12px;">{{ $propiedad->descripcion ?? '—' }}</td>
-                    <td style="padding: 12px;">{{ $propiedad->precio_acordado !== null ? '$' . number_format($propiedad->precio_acordado, 2) : '—' }}</td>
-                    <td style="padding: 12px;">
+                    <td>{{ $propiedad->descripcion ?? '—' }}</td>
+                    <td>{{ $propiedad->precio_acordado !== null ? '$' . number_format($propiedad->precio_acordado, 2) : '—' }}</td>
+                    <td>
                         <span style="background: {{ $propiedad->estado === 'disponible' ? 'var(--accent-hover)' : ($propiedad->estado === 'ocupada' ? '#ef4444' : '#f59e0b') }}; color: white; font-weight: 600; padding: 4px 8px; border-radius: 5px; font-size: 0.8rem;">
                             {{ ucfirst($propiedad->estado) }}
                         </span>
                     </td>
-                    <td style="padding: 12px; text-align: center; display: flex; justify-content: center; gap: 15px;">
+                    <td style="text-align: center; display: flex; justify-content: center; gap: 15px;">
                         <a href="{{ route('admin.edit-propiedad', $propiedad->id) }}" style="color: var(--accent-light); text-decoration: none;" title="Editar">
                             <i class="fas fa-edit"></i>
                         </a>

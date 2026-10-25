@@ -578,11 +578,32 @@ select option {
     gap: 15px;
 }
 
+/* Selects de cédula (V/E) y prefijo telefónico: ancho fijo en desktop que
+   en pantallas angostas deja muy poco espacio al campo de número, así que
+   se recortan con elipsis en vez de empujar el resto del formulario. */
+#cedula-tipo,
+#telefono-prefijo {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 @media (max-width: 768px) {
     .dashboard-layout {
         flex-direction: column;
         padding: 10px;
         gap: 10px;
+    }
+
+    #cedula-tipo {
+        flex-basis: 62px;
+        padding: 10px 4px;
+    }
+
+    #telefono-prefijo {
+        flex-basis: 92px;
+        padding: 10px 4px;
+        font-size: 0.8rem;
     }
 
     .sidebar {
@@ -631,6 +652,14 @@ select option {
     .action-cards, .form-row {
         flex-direction: column;
         gap: 10px;
+    }
+
+    /* Filas de Cédula (V/E) y prefijo telefónico: deben conservar el
+       diseño en fila también en móvil (a diferencia del resto de
+       .form-row, como Nombre/Apellido, que sí se apilan). */
+    .form-row-fija {
+        flex-direction: row;
+        gap: 8px;
     }
 
     .action-card {
@@ -722,19 +751,18 @@ select option {
 }
 
 .ajustes-tabs {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: 10px;
     max-width: 600px;
     margin: 0 auto 20px;
 }
 
 .ajustes-tab {
-    flex: 1 1 auto;
     text-align: center;
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-size: 0.9rem;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 0.82rem;
     font-weight: 600;
     color: #D1D5DB;
     background: rgba(255, 255, 255, 0.06);
@@ -878,6 +906,17 @@ select option {
     .sidebar.show {
         display: flex;
     }
+
+    .ajustes-tabs {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
+    .ajustes-tab {
+        padding: 7px 6px;
+        font-size: 0.72rem;
+        border-radius: 8px;
+    }
 }
 
 /* --------------------------------------------------------------------------
@@ -970,4 +1009,25 @@ select option {
 @keyframes alerta-flotante-entrada {
     from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
     to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* --------------------------------------------------------------------------
+   14. Tablas Globales (encabezados y celdas compactos)
+   -------------------------------------------------------------------------- */
+/* Encabezados en mayúsculas, pequeños y sin salto de línea en todas las
+   tablas del panel/inquilino, para que ocupen menos espacio vertical y no
+   se "engorden" con textos largos en las cabeceras de columna. */
+table thead th {
+    padding: 8px 10px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    opacity: 0.85;
+}
+
+/* Mismo criterio de compacidad para el contenido de las filas. */
+table tbody td {
+    padding: 8px 10px;
+    font-size: 0.85rem;
 }

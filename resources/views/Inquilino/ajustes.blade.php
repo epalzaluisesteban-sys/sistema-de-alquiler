@@ -33,7 +33,7 @@
 
             <div class="form-group">
                 <label><i class="fas fa-phone"></i> Teléfono de Contacto</label>
-                <div class="form-row" style="gap: 10px;">
+                <div class="form-row form-row-fija" style="gap: 10px;">
                     <select id="telefono-prefijo" style="flex: 0 0 170px;"></select>
                     <input type="text" id="telefono-numero" inputmode="numeric" maxlength="15" placeholder="Ej. 4121234567" style="flex: 1;">
                 </div>

@@ -25,7 +25,7 @@
             @csrf
             <div class="form-group">
                 <label>Cédula</label>
-                <div class="form-row" style="gap: 10px;">
+                <div class="form-row form-row-fija" style="gap: 10px;">
                     <select id="cedula-tipo" class="form-input" style="flex: 0 0 90px;" required>
                         <option value="V">V</option>
                         <option value="E">E</option>

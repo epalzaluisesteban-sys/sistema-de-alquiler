@@ -12,17 +12,18 @@
         <table style="width: 100%; border-collapse: collapse; color: #D1D5DB;">
             <thead>
                 <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.137); text-align: left;">
-                    <th style="padding: 12px;">Alquiler</th>
-                    <th style="padding: 12px;">Monto</th>
-                    <th style="padding: 12px;">Fecha</th>
-                    <th style="padding: 12px;">Estado</th>
-                    <th style="padding: 12px;">Comprobante</th>
+                    <th>Alquiler</th>
+                    <th>Monto</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Tipo Pago</th>
+                    <th>Comprob.</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($pagos as $pago)
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding: 12px;">
+                    <td>
                         @if($pago->asignacion?->habitacion)
                             Hab. {{ $pago->asignacion->habitacion->numero }} — {{ $pago->asignacion->habitacion->propiedad?->nombre ?? 'Sin propiedad' }}
                         @elseif($pago->asignacion?->propiedad)
@@ -31,9 +32,9 @@
                             —
                         @endif
                     </td>
-                    <td style="padding: 12px;">${{ number_format($pago->monto, 2) }}</td>
-                    <td style="padding: 12px;">{{ $pago->fecha?->format('d/m/Y') }}</td>
-                    <td style="padding: 12px;">
+                    <td>${{ number_format($pago->monto, 2) }}</td>
+                    <td>{{ $pago->fecha?->format('d/m/Y') }}</td>
+                    <td>
                         @php
                             $colores = ['pendiente' => '#ef4444', 'notificado' => '#f59e0b', 'confirmado' => '#22c55e'];
                             $etiquetas = ['pendiente' => 'Pendiente', 'notificado' => 'Notificado', 'confirmado' => 'Confirmado'];
@@ -42,7 +43,13 @@
                             {{ $etiquetas[$pago->estado_pago] ?? ucfirst($pago->estado_pago) }}
                         </span>
                     </td>
-                    <td style="padding: 12px;">
+                    <td>
+                        @php
+                            $etiquetasTipoPago = ['divisas' => 'Divisas', 'pago_movil' => 'Pago Móvil'];
+                        @endphp
+                        {{ $etiquetasTipoPago[$pago->tipo_pago] ?? '—' }}
+                    </td>
+                    <td>
                         @if($pago->ruta_comprobante)
                             <a href="{{ \Illuminate\Support\Facades\Storage::url($pago->ruta_comprobante) }}" target="_blank" style="color: #86EFAC;"><i class="fas fa-file-alt"></i> Ver</a>
                         @else

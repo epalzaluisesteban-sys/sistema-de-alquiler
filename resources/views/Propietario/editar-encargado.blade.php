@@ -38,7 +38,7 @@
             </div>
             <div class="form-group">
                 <label><i class="fas fa-id-card"></i> Cédula</label>
-                <div class="form-row" style="gap: 10px;">
+                <div class="form-row form-row-fija" style="gap: 10px;">
                     <select id="cedula-tipo" style="flex: 0 0 90px;" required>
                         <option value="V">V</option>
                         <option value="E">E</option>
@@ -50,7 +50,7 @@
             </div>
             <div class="form-group">
                 <label><i class="fas fa-phone"></i> Teléfono</label>
-                <div class="form-row" style="gap: 10px;">
+                <div class="form-row form-row-fija" style="gap: 10px;">
                     <select id="telefono-prefijo" style="flex: 0 0 170px;"></select>
                     <input type="text" id="telefono-numero" inputmode="numeric" maxlength="15" placeholder="Ej. 4121234567" style="flex: 1;">
                 </div>

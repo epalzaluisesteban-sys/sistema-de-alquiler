@@ -2,6 +2,8 @@
 
 @section('title', 'Gestión de Inquilinos')
 
+@php($esAdmin = strtolower(trim(auth()->user()->role ?? '')) === 'admin')
+
 @section('content')
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2><i class="fas fa-users"></i> Listado de Inquilinos</h2>
@@ -12,21 +14,21 @@
         <table style="width: 100%; border-collapse: collapse; color: #D1D5DB;">
             <thead>
                 <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.137); text-align: left;">
-                    <th style="padding: 12px;">Nombre</th>
-                    <th style="padding: 12px;">Cédula</th>
-                    <th style="padding: 12px;">Teléfono</th>
-                    <th style="padding: 12px;">Residencia</th>
-                    <th style="padding: 12px; text-align: center;">Acciones</th>
+                    <th>Nombre</th>
+                    <th>Cédula</th>
+                    <th>Teléfono</th>
+                    <th>Residencia</th>
+                    <th style="text-align: center;">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($inquilinos as $inquilino)
                 @php($asignacion = $inquilino->asignaciones->first())
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding: 12px;">{{ $inquilino->name }}</td>
-                    <td style="padding: 12px;">{{ $inquilino->cedula ?? '—' }}</td>
-                    <td style="padding: 12px;">{{ $inquilino->telefono ?? '—' }}</td>
-                    <td style="padding: 12px;">
+                    <td>{{ $inquilino->name }}</td>
+                    <td>{{ $inquilino->cedula ?? '—' }}</td>
+                    <td>{{ $inquilino->telefono ?? '—' }}</td>
+                    <td>
                         @if($asignacion && $asignacion->habitacion)
                             Hab. {{ $asignacion->habitacion->numero }} — {{ $asignacion->habitacion->propiedad?->nombre ?? 'Sin propiedad' }}
                         @elseif($asignacion && $asignacion->propiedad)
@@ -35,7 +37,7 @@
                             <span style="opacity: 0.7;">Sin asignar</span>
                         @endif
                     </td>
-                    <td style="padding: 12px; text-align: center; display: flex; justify-content: center; gap: 15px;">
+                    <td style="text-align: center; display: flex; justify-content: center; gap: 15px;">
                         @if($asignacion)
                             <x-tooltip texto="Registrar pago">
                                 <a href="{{ route('admin.nuevo-pago', ['asignacion' => $asignacion->id]) }}" style="color: #7DD3FC; text-decoration: none;">
@@ -53,15 +55,27 @@
                                 <i class="fas fa-edit"></i>
                             </a>
                         </x-tooltip>
-                        <x-tooltip texto="Eliminar">
-                            <form action="{{ route('admin.destroy-inquilino', $inquilino->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar a este inquilino?');" style="display: inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" style="background: none; border: none; color: #ff6b6b; cursor: pointer;">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </form>
-                        </x-tooltip>
+                        @if($esAdmin)
+                            <x-tooltip texto="Delegar como encargado">
+                                <form action="{{ route('admin.delegar-encargado', $inquilino->id) }}" method="POST" onsubmit="return confirm('¿Convertir a {{ $inquilino->name }} en encargado? Dejará de aparecer como inquilino.');" style="display: inline;">
+                                    @csrf
+                                    <button type="submit" style="background: none; border: none; color: #A78BFA; cursor: pointer;">
+                                        <i class="fas fa-user-shield"></i>
+                                    </button>
+                                </form>
+                            </x-tooltip>
+                        @endif
+                        @if($asignacion)
+                            <x-tooltip texto="Desalojar">
+                                <form action="{{ route('admin.desalojar-inquilino', $inquilino->id) }}" method="POST" onsubmit="return confirm('¿Desalojar a {{ $inquilino->name }}? Se finalizará su alquiler actual, pero su historial se conservará.');" style="display: inline;">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" style="background: none; border: none; color: #ff6b6b; cursor: pointer;">
+                                        <i class="fas fa-person-walking-arrow-right"></i>
+                                    </button>
+                                </form>
+                            </x-tooltip>
+                        @endif
                     </td>
                 </tr>
                 @endforeach

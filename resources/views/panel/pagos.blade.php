@@ -2,18 +2,70 @@
 
 @section('title', 'Control de Pagos')
 
+@push('head')
+    <style>
+        .filtro-pagos {
+            display: grid;
+            grid-template-columns: minmax(150px, 1.6fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(95px, 0.8fr) minmax(95px, 0.8fr) auto;
+            gap: 10px;
+            align-items: end;
+        }
+        .filtro-pagos .form-group { margin-bottom: 0; }
+        .filtro-pagos label { font-size: 0.78rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .filtro-pagos input,
+        .filtro-pagos select { padding: 8px 10px; font-size: 0.85rem; }
+        .filtro-pagos .filtro-acciones { display: flex; gap: 8px; }
+        .filtro-pagos .filtro-acciones .btn-glossy { padding: 8px 14px; font-size: 0.85rem; white-space: nowrap; }
+
+        .filtro-pagos-toggle { display: none; }
+
+        @media (max-width: 768px) {
+            .filtro-pagos {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .filtro-pagos .filtro-buscar,
+            .filtro-pagos .filtro-acciones { grid-column: 1 / -1; }
+
+            .filtro-pagos-toggle {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 16px;
+                margin-bottom: 10px;
+                cursor: pointer;
+                user-select: none;
+            }
+            .filtro-pagos-toggle .fa-chevron-down { transition: transform 0.2s ease; }
+            .filtro-pagos-toggle.abierto .fa-chevron-down { transform: rotate(180deg); }
+
+            .filtro-pagos { display: none; }
+            .filtro-pagos.filtro-pagos--abierto { display: grid; }
+        }
+    </style>
+@endpush
+
 @section('content')
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2><i class="fas fa-file-invoice-dollar"></i> Control de Pagos Mensuales</h2>
         <a href="{{ route('admin.nuevo-pago') }}" class="btn-glossy" style="width: auto; text-decoration: none;">+ Registrar Pago</a>
     </div>
 
-    <form method="GET" action="{{ route('admin.pagos') }}" class="glass-panel" style="padding: 15px 20px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
-        <div class="form-group" style="flex: 2 1 220px; margin-bottom: 0;">
-            <label><i class="fas fa-search"></i> Buscar (inquilino, propiedad, cédula)</label>
-            <input type="text" name="q" value="{{ $q }}" placeholder="Ej: Juan Pérez">
+    @php
+        $filtrosActivos = $estado || $tipoPago || $q !== '' || $desde || $hasta;
+    @endphp
+
+    <div class="glass-panel filtro-pagos-toggle {{ $filtrosActivos ? 'abierto' : '' }}" id="filtro-pagos-toggle" onclick="toggleFiltroPagos()">
+        <span><i class="fas fa-filter"></i> Filtros{{ $filtrosActivos ? ' (activos)' : '' }}</span>
+        <i class="fas fa-chevron-down"></i>
+    </div>
+
+    <form method="GET" action="{{ route('admin.pagos') }}" id="filtro-pagos-form" class="glass-panel filtro-pagos {{ $filtrosActivos ? 'filtro-pagos--abierto' : '' }}" style="padding: 15px 20px; margin-bottom: 20px;">
+        <div class="form-group filtro-buscar">
+            <label><i class="fas fa-search"></i> Buscar</label>
+            <input type="text" name="q" value="{{ $q }}" placeholder="Inquilino, propiedad o cédula">
         </div>
-        <div class="form-group" style="flex: 1 1 160px; margin-bottom: 0;">
+        <div class="form-group">
             <label><i class="fas fa-layer-group"></i> Estado</label>
             <select name="estado">
                 <option value="">Todos</option>
@@ -22,18 +74,26 @@
                 <option value="confirmado" @selected($estado === 'confirmado')>Confirmado</option>
             </select>
         </div>
-        <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
+        <div class="form-group">
+            <label><i class="fas fa-money-bill-wave"></i> Tipo de Pago</label>
+            <select name="tipo_pago">
+                <option value="">Todos</option>
+                <option value="divisas" @selected($tipoPago === 'divisas')>Divisas</option>
+                <option value="pago_movil" @selected($tipoPago === 'pago_movil')>Pago Móvil</option>
+            </select>
+        </div>
+        <div class="form-group">
             <label><i class="fas fa-calendar"></i> Desde</label>
             <input type="date" name="desde" value="{{ $desde }}">
         </div>
-        <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
+        <div class="form-group">
             <label><i class="fas fa-calendar"></i> Hasta</label>
             <input type="date" name="hasta" value="{{ $hasta }}">
         </div>
-        <div style="display: flex; gap: 10px;">
-            <button type="submit" class="btn-glossy" style="width: auto; padding: 10px 20px;"><i class="fas fa-filter"></i> Filtrar</button>
-            @if($estado || $q !== '' || $desde || $hasta)
-                <a href="{{ route('admin.pagos') }}" class="btn-glossy" style="width: auto; padding: 10px 20px; background: rgba(255,255,255,0.15); text-decoration: none; text-align: center;">Limpiar</a>
+        <div class="filtro-acciones">
+            <button type="submit" class="btn-glossy" style="width: auto;"><i class="fas fa-filter"></i> Filtrar</button>
+            @if($estado || $tipoPago || $q !== '' || $desde || $hasta)
+                <a href="{{ route('admin.pagos') }}" class="btn-glossy" style="width: auto; background: rgba(255,255,255,0.15); text-decoration: none; text-align: center;">Limpiar</a>
             @endif
         </div>
     </form>
@@ -42,20 +102,21 @@
         <table style="width: 100%; border-collapse: collapse; color: #D1D5DB;">
             <thead>
                 <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.137); text-align: left;">
-                    <th style="padding: 12px;">Inquilino</th>
-                    <th style="padding: 12px;">Residencia</th>
-                    <th style="padding: 12px;">Monto</th>
-                    <th style="padding: 12px;">Fecha</th>
-                    <th style="padding: 12px;">Estado</th>
-                    <th style="padding: 12px;">Comprobante</th>
-                    <th style="padding: 12px; text-align: center;">Acciones</th>
+                    <th>Inquilino</th>
+                    <th>Residencia</th>
+                    <th>Monto</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Tipo Pago</th>
+                    <th>Comprob.</th>
+                    <th style="text-align: center;">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($pagos as $pago)
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding: 12px;">{{ $pago->asignacion?->usuario?->name ?? '—' }}</td>
-                    <td style="padding: 12px;">
+                    <td>{{ $pago->asignacion?->usuario?->name ?? '—' }}</td>
+                    <td>
                         @if($pago->asignacion?->habitacion)
                             Hab. {{ $pago->asignacion->habitacion->numero }} — {{ $pago->asignacion->habitacion->propiedad?->nombre ?? 'Sin propiedad' }}
                         @elseif($pago->asignacion?->propiedad)
@@ -64,9 +125,9 @@
                             —
                         @endif
                     </td>
-                    <td style="padding: 12px;">${{ number_format($pago->monto, 2) }}</td>
-                    <td style="padding: 12px;">{{ $pago->fecha?->format('d/m/Y') }}</td>
-                    <td style="padding: 12px;">
+                    <td>${{ number_format($pago->monto, 2) }}</td>
+                    <td>{{ $pago->fecha?->format('d/m/Y') }}</td>
+                    <td>
                         @php
                             $colores = ['pendiente' => '#ef4444', 'notificado' => '#f59e0b', 'confirmado' => 'var(--accent-hover)'];
                         @endphp
@@ -80,14 +141,20 @@
                             </select>
                         </form>
                     </td>
-                    <td style="padding: 12px;">
+                    <td>
+                        @php
+                            $etiquetasTipoPago = ['divisas' => 'Divisas', 'pago_movil' => 'Pago Móvil'];
+                        @endphp
+                        {{ $etiquetasTipoPago[$pago->tipo_pago] ?? '—' }}
+                    </td>
+                    <td>
                         @if($pago->ruta_comprobante)
                             <a href="{{ \Illuminate\Support\Facades\Storage::url($pago->ruta_comprobante) }}" target="_blank" style="color: var(--accent-light);"><i class="fas fa-file-alt"></i> Ver</a>
                         @else
                             —
                         @endif
                     </td>
-                    <td style="padding: 12px; text-align: center; display: flex; justify-content: center; gap: 15px;">
+                    <td style="text-align: center; display: flex; justify-content: center; gap: 15px;">
                         <a href="{{ route('admin.edit-pago', $pago->id) }}" style="color: var(--accent-light); text-decoration: none;" title="Editar">
                             <i class="fas fa-edit"></i>
                         </a>
@@ -105,7 +172,7 @@
         </table>
         @if($pagos->isEmpty())
             <p style="text-align: center; opacity: 0.8; margin-top: 20px;">
-                @if($estado || $q !== '' || $desde || $hasta)
+                @if($estado || $tipoPago || $q !== '' || $desde || $hasta)
                     No hay pagos que coincidan con los filtros aplicados.
                 @else
                     No hay pagos registrados actualmente.
@@ -143,3 +210,12 @@
         </div>
     @endif
 @endsection
+
+@push('scripts')
+    <script>
+        function toggleFiltroPagos() {
+            document.getElementById('filtro-pagos-form').classList.toggle('filtro-pagos--abierto');
+            document.getElementById('filtro-pagos-toggle').classList.toggle('abierto');
+        }
+    </script>
+@endpush

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Asignacion;
 use App\Models\Pago;
 use App\Models\Reporte;
+use App\Models\Usuario;
 use App\Support\Personalizacion;
 use Illuminate\Http\Request;
 
@@ -20,6 +21,8 @@ class DashboardController extends Controller
             ->sum('monto');
 
         $ultimosMovimientos = Pago::with(['asignacion.usuario', 'asignacion.habitacion.propiedad', 'asignacion.propiedad'])
+            ->whereMonth('fecha', now()->month)
+            ->whereYear('fecha', now()->year)
             ->orderByDesc('fecha')
             ->orderByDesc('id')
             ->take(8)
@@ -47,12 +50,23 @@ class DashboardController extends Controller
 
     public function ajustes()
     {
+        $inquilinos = Usuario::where('rol', 'inquilino')
+            ->withCount('asignaciones')
+            ->with(['asignaciones' => function ($query) {
+                $query->where('estado_asignacion', 'activo')
+                    ->latest('fecha_inicio')
+                    ->with(['habitacion.propiedad', 'propiedad']);
+            }])
+            ->orderBy('nombre')
+            ->get();
+
         return view('panel.ajustes', [
             'usuario' => auth()->user(),
             'fondos' => Personalizacion::FONDOS,
             'colores' => Personalizacion::COLORES,
             'fuentes' => Personalizacion::FUENTES,
             'botones' => Personalizacion::BOTONES,
+            'inquilinos' => $inquilinos,
         ]);
     }
 

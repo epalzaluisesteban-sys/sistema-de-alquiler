@@ -4,17 +4,20 @@
 
 @section('content')
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2><i class="fas fa-door-open"></i> Listado de Habitaciones</h2>
+        <h2><i class="fas fa-door-open"></i> Listado de Habitaciones @if($propiedad) — {{ $propiedad->nombre }} @endif</h2>
+        @if($propiedad)
+            <a href="{{ route('admin.propiedades') }}" style="color: white; text-decoration: none;"><i class="fas fa-arrow-left"></i> Volver a Propiedades</a>
+        @endif
     </div>
 
     <div class="glass-panel" style="padding: 20px; overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse; color: #D1D5DB;">
             <thead>
                 <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.137); text-align: left;">
-                    <th style="padding: 12px;">Propiedad</th>
-                    <th style="padding: 12px;">Número</th>
-                    <th style="padding: 12px;">Precio</th>
-                    <th style="padding: 12px;">Estado</th>
+                    <th>Propiedad</th>
+                    <th>Número</th>
+                    <th>Precio</th>
+                    <th>Estado</th>
                 </tr>
             </thead>
             <tbody>
@@ -31,22 +34,22 @@
                                 : null);
                     @endphp
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <td style="padding: 12px;">
+                        <td>
                             @if($destino)
                                 <a href="{{ $destino }}" style="color: inherit; text-decoration: none;">{{ $habitacion->propiedad?->nombre ?? '—' }}</a>
                             @else
                                 {{ $habitacion->propiedad?->nombre ?? '—' }}
                             @endif
                         </td>
-                        <td style="padding: 12px;">
+                        <td>
                             @if($destino)
                                 <a href="{{ $destino }}" style="color: inherit; text-decoration: none;">Habitación {{ $habitacion->numero }}</a>
                             @else
                                 Habitación {{ $habitacion->numero }}
                             @endif
                         </td>
-                        <td style="padding: 12px;">${{ number_format($habitacion->precio_actual ?? 0, 2) }}</td>
-                        <td style="padding: 12px;">
+                        <td>${{ number_format($habitacion->precio_actual ?? 0, 2) }}</td>
+                        <td>
                             <form action="{{ route('admin.update-estado-habitacion', $habitacion->id) }}" method="POST">
                                 @csrf
                                 @method('PUT')

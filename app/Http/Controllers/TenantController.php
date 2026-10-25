@@ -66,7 +66,8 @@ class TenantController extends Controller
 
         $validated = $request->validate([
             'monto' => ['required', 'numeric', 'min:0'],
-            'fecha' => ['required', 'date'],
+            'fecha' => ['required', 'date', 'before_or_equal:today'],
+            'tipo_pago' => ['required', 'in:divisas,pago_movil'],
             'comprobante' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ]);
 
@@ -81,6 +82,7 @@ class TenantController extends Controller
             'monto' => $validated['monto'],
             'fecha' => $validated['fecha'],
             'estado_pago' => 'notificado',
+            'tipo_pago' => $validated['tipo_pago'],
             'ruta_comprobante' => $rutaComprobante,
         ]);
 

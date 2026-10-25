@@ -3,21 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\Habitacion;
+use App\Models\Propiedad;
 use Illuminate\Http\Request;
 
 class HabitacionController extends Controller
 {
-    public function habitaciones()
+    public function habitaciones(Request $request)
     {
+        $propiedad = $request->filled('propiedad_id')
+            ? Propiedad::find($request->integer('propiedad_id'))
+            : null;
+
         $habitaciones = Habitacion::with([
                 'propiedad.usuario',
                 'asignaciones' => fn ($q) => $q->where('estado_asignacion', 'activo'),
             ])
+            ->when($propiedad, fn ($q) => $q->where('propiedad_id', $propiedad->id))
             ->orderBy('propiedad_id')
             ->orderByRaw('CAST(numero AS UNSIGNED)')
             ->get();
 
-        return view('Propietario.habitaciones', compact('habitaciones'));
+        return view('Propietario.habitaciones', compact('habitaciones', 'propiedad'));
     }
 
     public function updateEstado(Request $request, $id)

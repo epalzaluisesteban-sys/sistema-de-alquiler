@@ -21,6 +21,7 @@ class Pago extends Model
         'monto',
         'fecha',
         'estado_pago',
+        'tipo_pago',
         'ruta_comprobante',
     ];
 

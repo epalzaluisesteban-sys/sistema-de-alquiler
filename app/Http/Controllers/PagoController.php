@@ -11,12 +11,14 @@ class PagoController extends Controller
     public function pagos(Request $request)
     {
         $estado = $request->query('estado');
+        $tipoPago = $request->query('tipo_pago');
         $q = trim((string) $request->query('q', ''));
         $desde = $request->query('desde');
         $hasta = $request->query('hasta');
 
         $pagos = Pago::with(['asignacion.usuario', 'asignacion.habitacion.propiedad', 'asignacion.propiedad'])
             ->when($estado, fn ($query) => $query->where('estado_pago', $estado))
+            ->when($tipoPago, fn ($query) => $query->where('tipo_pago', $tipoPago))
             ->when($desde, fn ($query) => $query->whereDate('fecha', '>=', $desde))
             ->when($hasta, fn ($query) => $query->whereDate('fecha', '<=', $hasta))
             ->when($q !== '', function ($query) use ($q) {
@@ -49,7 +51,7 @@ class PagoController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('panel.pagos', compact('pagos', 'estado', 'q', 'desde', 'hasta'));
+        return view('panel.pagos', compact('pagos', 'estado', 'tipoPago', 'q', 'desde', 'hasta'));
     }
 
     public function nuevoPago(Request $request)
@@ -70,8 +72,9 @@ class PagoController extends Controller
         $validated = $request->validate([
             'asignacion_id' => ['required', 'exists:asignaciones,id'],
             'monto' => ['required', 'numeric', 'min:0'],
-            'fecha' => ['required', 'date'],
+            'fecha' => ['required', 'date', 'before_or_equal:today'],
             'estado_pago' => ['required', 'in:pendiente,notificado,confirmado'],
+            'tipo_pago' => ['required', 'in:divisas,pago_movil'],
         ]);
 
         Pago::create($validated);
@@ -98,8 +101,9 @@ class PagoController extends Controller
         $validated = $request->validate([
             'asignacion_id' => ['required', 'exists:asignaciones,id'],
             'monto' => ['required', 'numeric', 'min:0'],
-            'fecha' => ['required', 'date'],
+            'fecha' => ['required', 'date', 'before_or_equal:today'],
             'estado_pago' => ['required', 'in:pendiente,notificado,confirmado'],
+            'tipo_pago' => ['required', 'in:divisas,pago_movil'],
         ]);
 
         $pago->update($validated);

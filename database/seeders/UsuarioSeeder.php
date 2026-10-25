@@ -12,7 +12,7 @@ class UsuarioSeeder extends Seeder
     {
         // Crea el Administrador con el rol exacto
         Usuario::create([
-            'cedula' => '32267986',
+            'cedula' => 'V-32267986',
             'nombre' => 'Luis',
             'apellido' => 'Garzon',
             'telefono' => '04120741819',
@@ -22,7 +22,7 @@ class UsuarioSeeder extends Seeder
 
         // Crea un Inquilino de prueba
         Usuario::create([
-            'cedula' => '32267995',
+            'cedula' => 'V-32267995',
             'nombre' => 'Ángel',
             'apellido' => 'Soto',
             'telefono' => '04120145180',

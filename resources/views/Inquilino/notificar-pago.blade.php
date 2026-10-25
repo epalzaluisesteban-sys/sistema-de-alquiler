@@ -33,7 +33,15 @@
                 </div>
                 <div class="form-group">
                     <label><i class="fas fa-calendar"></i> Fecha</label>
-                    <input type="date" name="fecha" value="{{ old('fecha', now()->toDateString()) }}" required>
+                    <input type="date" name="fecha" value="{{ old('fecha', now()->toDateString()) }}" max="{{ now()->toDateString() }}" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-money-bill-wave"></i> Tipo de Pago</label>
+                    <select name="tipo_pago" required>
+                        <option value="">-- Seleccione --</option>
+                        <option value="divisas" @selected(old('tipo_pago') === 'divisas')>Divisas</option>
+                        <option value="pago_movil" @selected(old('tipo_pago') === 'pago_movil')>Pago Móvil</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label><i class="fas fa-paperclip"></i> Comprobante (opcional, JPG/PNG/PDF, máx. 5MB)</label>

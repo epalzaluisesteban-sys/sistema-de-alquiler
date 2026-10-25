@@ -1,16 +1,23 @@
 @extends('layouts.panel')
 
-@section('title', 'Historial de Inquilino')
+@php($esEncargado = $inquilino->rol === 'encargado')
+@php($tieneAsignacionActiva = $asignaciones->contains('estado_asignacion', 'activo'))
+
+@section('title', 'Historial de ' . ($esEncargado ? 'Encargado' : 'Inquilino'))
 
 @section('content')
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2><i class="fas fa-clock-rotate-left"></i> Historial de {{ $inquilino->name }}</h2>
-        <a href="{{ route('admin.inquilinos') }}" style="color: white; text-decoration: none;"><i class="fas fa-arrow-left"></i> Volver</a>
+        <a href="{{ route($esEncargado ? 'admin.encargados' : 'admin.inquilinos') }}" style="color: white; text-decoration: none;"><i class="fas fa-arrow-left"></i> Volver</a>
     </div>
 
     <div class="glass-panel" style="padding: 20px; margin-bottom: 20px;">
         <p><i class="fas fa-id-card"></i> Cédula: {{ $inquilino->cedula ?? '—' }}</p>
         <p><i class="fas fa-phone"></i> Teléfono: {{ $inquilino->telefono ?? '—' }}</p>
+        <p>
+            <i class="fas fa-circle" style="font-size: 10px; color: {{ $tieneAsignacionActiva ? '#4ADE80' : '#ff6b6b' }};"></i>
+            {{ $tieneAsignacionActiva ? 'Actualmente alquilado' : 'Ya no está alquilado' }}
+        </p>
     </div>
 
     @forelse($asignaciones as $asignacion)
@@ -37,17 +44,17 @@
                 <table style="width: 100%; border-collapse: collapse; color: #D1D5DB; margin-top: 10px;">
                     <thead>
                         <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.137); text-align: left;">
-                            <th style="padding: 8px;">Fecha</th>
-                            <th style="padding: 8px;">Monto</th>
-                            <th style="padding: 8px;">Estado</th>
+                            <th>Fecha</th>
+                            <th>Monto</th>
+                            <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($asignacion->pagos as $pago)
                             <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                <td style="padding: 8px;">{{ $pago->fecha?->format('d/m/Y') }}</td>
-                                <td style="padding: 8px;">${{ number_format($pago->monto, 2) }}</td>
-                                <td style="padding: 8px; text-transform: capitalize;">{{ $pago->estado_pago }}</td>
+                                <td>{{ $pago->fecha?->format('d/m/Y') }}</td>
+                                <td>${{ number_format($pago->monto, 2) }}</td>
+                                <td style="text-transform: capitalize;">{{ $pago->estado_pago }}</td>
                             </tr>
                         @endforeach
                     </tbody>

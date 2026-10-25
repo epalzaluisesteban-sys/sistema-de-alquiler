@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\AsignaResidencia;
 use App\Models\Asignacion;
 use App\Models\Habitacion;
+use App\Models\Inquilino;
 use App\Models\Propiedad;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
@@ -15,7 +16,14 @@ class EncargadoController extends Controller
 
     public function encargados()
     {
-        $encargados = Usuario::where('rol', 'encargado')->orderBy('nombre')->get();
+        $encargados = Usuario::where('rol', 'encargado')
+            ->with(['asignaciones' => function ($query) {
+                $query->where('estado_asignacion', 'activo')
+                    ->latest('fecha_inicio')
+                    ->with(['habitacion.propiedad', 'propiedad']);
+            }])
+            ->orderBy('nombre')
+            ->get();
 
         return view('Propietario.encargados', compact('encargados'));
     }
@@ -148,7 +156,44 @@ class EncargadoController extends Controller
         return redirect()->route('admin.encargados')->with('success', 'Encargado actualizado correctamente.');
     }
 
-    public function destroyEncargado($id)
+    /**
+     * Delega a un inquilino ya registrado como encargado: cambia su rol sin
+     * tocar su residencia actual (un encargado también puede vivir en una
+     * propiedad, igual que se permite en storeEncargado/updateEncargado).
+     */
+    public function delegarInquilino($id)
+    {
+        $inquilino = Usuario::where('rol', 'inquilino')->findOrFail($id);
+
+        $inquilino->update(['role' => 'encargado']);
+
+        Inquilino::where('usuario_id', $id)->delete();
+
+        return redirect()->route('admin.encargados')->with('success', 'Inquilino delegado como encargado con éxito.');
+    }
+
+    /**
+     * Revierte a un encargado a inquilino normal: cambia su rol sin tocar
+     * su residencia actual (si vivía en una propiedad como encargado, sigue
+     * viviendo ahí como inquilino).
+     */
+    public function revertirInquilino($id)
+    {
+        $encargado = Usuario::where('rol', 'encargado')->findOrFail($id);
+
+        $encargado->update(['role' => 'inquilino']);
+
+        Inquilino::firstOrCreate(['usuario_id' => $id]);
+
+        return redirect()->route('admin.encargados')->with('success', 'El encargado ahora es un inquilino normal.');
+    }
+
+    /**
+     * Desaloja al encargado: finaliza su(s) asignación(es) activa(s) y
+     * libera la habitación/propiedad, pero conserva su cuenta y su
+     * historial de residencias y pagos (no se borra al usuario).
+     */
+    public function desalojarEncargado($id)
     {
         $encargado = Usuario::where('rol', 'encargado')->findOrFail($id);
 
@@ -157,8 +202,6 @@ class EncargadoController extends Controller
             ->get()
             ->each(fn (Asignacion $asignacion) => $this->liberarAsignacion($asignacion));
 
-        $encargado->delete();
-
-        return redirect()->route('admin.encargados')->with('success', 'Encargado eliminado correctamente.');
+        return redirect()->route('admin.encargados')->with('success', 'Encargado desalojado correctamente. Su historial se conserva.');
     }
 }

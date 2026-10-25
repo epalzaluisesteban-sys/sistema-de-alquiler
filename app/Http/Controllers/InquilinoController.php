@@ -206,7 +206,10 @@ class InquilinoController extends Controller
      */
     public function historial($id)
     {
-        $inquilino = Usuario::where('rol', 'inquilino')->findOrFail($id);
+        // Accesible también para encargados que viven en una propiedad: el
+        // historial de residencias/pagos no depende del rol, solo de tener
+        // asignaciones.
+        $inquilino = Usuario::whereIn('rol', ['inquilino', 'encargado'])->findOrFail($id);
 
         $asignaciones = Asignacion::where('usuario_id', $id)
             ->with(['habitacion.propiedad', 'propiedad', 'pagos'])
@@ -216,7 +219,12 @@ class InquilinoController extends Controller
         return view('panel.historial-inquilino', compact('inquilino', 'asignaciones'));
     }
 
-    public function destroyInquilino($id)
+    /**
+     * Desaloja al inquilino: finaliza su(s) asignación(es) activa(s) y
+     * libera la habitación/propiedad, pero conserva su cuenta y su
+     * historial de residencias y pagos (no se borra al usuario).
+     */
+    public function desalojarInquilino($id)
     {
         $user = Usuario::findOrFail($id);
 
@@ -225,8 +233,6 @@ class InquilinoController extends Controller
             ->get()
             ->each(fn (Asignacion $asignacion) => $this->liberarAsignacion($asignacion));
 
-        $user->delete();
-
-        return redirect()->route('admin.inquilinos')->with('success', 'Inquilino eliminado correctamente.');
+        return redirect()->route('admin.inquilinos')->with('success', 'Inquilino desalojado correctamente. Su historial se conserva.');
     }
 }

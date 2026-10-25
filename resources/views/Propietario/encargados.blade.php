@@ -12,29 +12,66 @@
         <table style="width: 100%; border-collapse: collapse; color: #D1D5DB;">
             <thead>
                 <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.137); text-align: left;">
-                    <th style="padding: 12px;">Nombre</th>
-                    <th style="padding: 12px;">Cédula</th>
-                    <th style="padding: 12px;">Teléfono</th>
-                    <th style="padding: 12px; text-align: center;">Acciones</th>
+                    <th>Nombre</th>
+                    <th>Cédula</th>
+                    <th>Teléfono</th>
+                    <th>Residencia</th>
+                    <th style="text-align: center;">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($encargados as $encargado)
+                @php($asignacion = $encargado->asignaciones->first())
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding: 12px;">{{ $encargado->name }}</td>
-                    <td style="padding: 12px;">{{ $encargado->cedula ?? '—' }}</td>
-                    <td style="padding: 12px;">{{ $encargado->telefono ?? '—' }}</td>
-                    <td style="padding: 12px; text-align: center; display: flex; justify-content: center; gap: 15px;">
-                        <a href="{{ route('admin.edit-encargado', $encargado->id) }}" style="color: var(--accent-light); text-decoration: none;" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <form action="{{ route('admin.destroy-encargado', $encargado->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar a este encargado?');" style="display: inline;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" style="background: none; border: none; color: #ff6b6b; cursor: pointer;">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </form>
+                    <td>{{ $encargado->name }}</td>
+                    <td>{{ $encargado->cedula ?? '—' }}</td>
+                    <td>{{ $encargado->telefono ?? '—' }}</td>
+                    <td>
+                        @if($asignacion && $asignacion->habitacion)
+                            Hab. {{ $asignacion->habitacion->numero }} — {{ $asignacion->habitacion->propiedad?->nombre ?? 'Sin propiedad' }}
+                        @elseif($asignacion && $asignacion->propiedad)
+                            {{ $asignacion->propiedad->nombre }} (Casa completa)
+                        @else
+                            <span style="opacity: 0.7;">No vive en una propiedad</span>
+                        @endif
+                    </td>
+                    <td style="text-align: center; display: flex; justify-content: center; gap: 15px;">
+                        @if($asignacion)
+                            <x-tooltip texto="Registrar pago">
+                                <a href="{{ route('admin.nuevo-pago', ['asignacion' => $asignacion->id]) }}" style="color: #7DD3FC; text-decoration: none;">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </a>
+                            </x-tooltip>
+                            <x-tooltip texto="Ver historial">
+                                <a href="{{ route('admin.historial-inquilino', $encargado->id) }}" style="color: #FCD34D; text-decoration: none;">
+                                    <i class="fas fa-clock-rotate-left"></i>
+                                </a>
+                            </x-tooltip>
+                        @endif
+                        <x-tooltip texto="Editar">
+                            <a href="{{ route('admin.edit-encargado', $encargado->id) }}" style="color: var(--accent-light); text-decoration: none;">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </x-tooltip>
+                        <x-tooltip texto="Volver a ser inquilino">
+                            <form action="{{ route('admin.revertir-inquilino', $encargado->id) }}" method="POST" onsubmit="return confirm('¿Devolver a {{ $encargado->name }} a inquilino normal? Dejará de tener acceso como encargado.');" style="display: inline;">
+                                @csrf
+                                <button type="submit" style="background: none; border: none; color: #A78BFA; cursor: pointer;">
+                                    <i class="fas fa-user-minus"></i>
+                                </button>
+                            </form>
+                        </x-tooltip>
+                        @if($asignacion)
+                            <x-tooltip texto="Desalojar">
+                                <form action="{{ route('admin.desalojar-encargado', $encargado->id) }}" method="POST" onsubmit="return confirm('¿Desalojar a {{ $encargado->name }}? Se finalizará su alquiler actual, pero su historial se conservará.');" style="display: inline;">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" style="background: none; border: none; color: #ff6b6b; cursor: pointer;">
+                                        <i class="fas fa-person-walking-arrow-right"></i>
+                                    </button>
+                                </form>
+                            </x-tooltip>
+                        @endif
                     </td>
                 </tr>
                 @endforeach

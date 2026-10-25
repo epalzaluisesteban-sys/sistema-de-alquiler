@@ -48,17 +48,27 @@
                 </div>
                 <div class="form-group" style="flex: 1;">
                     <label><i class="fas fa-calendar"></i> Fecha</label>
-                    <input type="date" name="fecha" value="{{ old('fecha', now()->toDateString()) }}" required>
+                    <input type="date" name="fecha" value="{{ old('fecha', now()->toDateString()) }}" max="{{ now()->toDateString() }}" required>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label><i class="fas fa-layer-group"></i> Estado del Pago</label>
-                <select name="estado_pago" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                    <option value="pendiente" @selected(old('estado_pago') === 'pendiente')>Pendiente</option>
-                    <option value="notificado" @selected(old('estado_pago') === 'notificado')>Notificado por el inquilino</option>
-                    <option value="confirmado" @selected(old('estado_pago') === 'confirmado')>Confirmado</option>
-                </select>
+            <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                    <label><i class="fas fa-layer-group"></i> Estado del Pago</label>
+                    <select name="estado_pago" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                        <option value="pendiente" @selected(old('estado_pago') === 'pendiente')>Pendiente</option>
+                        <option value="notificado" @selected(old('estado_pago') === 'notificado')>Notificado por el inquilino</option>
+                        <option value="confirmado" @selected(old('estado_pago') === 'confirmado')>Confirmado</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label><i class="fas fa-money-bill-wave"></i> Tipo de Pago</label>
+                    <select name="tipo_pago" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);" required>
+                        <option value="">-- Seleccione --</option>
+                        <option value="divisas" @selected(old('tipo_pago') === 'divisas')>Divisas</option>
+                        <option value="pago_movil" @selected(old('tipo_pago') === 'pago_movil')>Pago Móvil</option>
+                    </select>
+                </div>
             </div>
 
             <div style="text-align: center; margin-top: 20px;">

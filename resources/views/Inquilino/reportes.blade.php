@@ -40,17 +40,17 @@
         <table style="width: 100%; border-collapse: collapse; color: #D1D5DB;">
             <thead>
                 <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.137); text-align: left;">
-                    <th style="padding: 12px;">Descripción</th>
-                    <th style="padding: 12px;">Fecha</th>
-                    <th style="padding: 12px;">Estado</th>
+                    <th>Descripción</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($reportes as $reporte)
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding: 12px;">{{ $reporte->descripcion }}</td>
-                    <td style="padding: 12px;">{{ $reporte->fecha?->format('d/m/Y') }}</td>
-                    <td style="padding: 12px;">
+                    <td>{{ $reporte->descripcion }}</td>
+                    <td>{{ $reporte->fecha?->format('d/m/Y') }}</td>
+                    <td>
                         @php
                             $colores = ['pendiente' => '#ef4444', 'en_revision' => '#f59e0b', 'resuelto' => '#22c55e'];
                             $etiquetas = ['pendiente' => 'Pendiente', 'en_revision' => 'En revisión', 'resuelto' => 'Resuelto'];
