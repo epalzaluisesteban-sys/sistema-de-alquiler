@@ -48,7 +48,12 @@
 @section('content')
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2><i class="fas fa-file-invoice-dollar"></i> Control de Pagos Mensuales</h2>
-        <a href="{{ route('admin.nuevo-pago') }}" class="btn-glossy" style="width: auto; text-decoration: none;">+ Registrar Pago</a>
+        <div style="display: flex; gap: 10px;">
+            @if(auth()->user()->role === 'admin')
+                <a href="{{ route('admin.pagos-papelera') }}" class="btn-glossy" style="width: auto; text-decoration: none; background: rgba(255,255,255,0.15);" title="Pagos eliminados"><i class="fas fa-trash-restore"></i> Papelera</a>
+            @endif
+            <a href="{{ route('admin.nuevo-pago') }}" class="btn-glossy" style="width: auto; text-decoration: none;">+ Registrar Pago</a>
+        </div>
     </div>
 
     @php
@@ -134,7 +139,7 @@
                         <form action="{{ route('admin.pagos.quick-estado', $pago->id) }}" method="POST">
                             @csrf
                             @method('PATCH')
-                            <select name="estado_pago" onchange="this.form.submit()" title="Cambiar estado" style="width: auto; background: {{ $colores[$pago->estado_pago] ?? '#6b7280' }}; color: white; border: none; padding: 4px 8px; border-radius: 5px; font-size: 0.8rem; cursor: pointer;">
+                            <select name="estado_pago" onchange="this.form.submit()" title="{{ $pago->confirmadoPor ? 'Confirmado por ' . $pago->confirmadoPor->name . ' el ' . $pago->confirmado_en?->format('d/m/Y H:i') : 'Cambiar estado' }}" style="width: auto; background: {{ $colores[$pago->estado_pago] ?? '#6b7280' }}; color: white; border: none; padding: 4px 8px; border-radius: 5px; font-size: 0.8rem; cursor: pointer;">
                                 <option value="pendiente" @selected($pago->estado_pago === 'pendiente')>Pendiente</option>
                                 <option value="notificado" @selected($pago->estado_pago === 'notificado')>Notificado</option>
                                 <option value="confirmado" @selected($pago->estado_pago === 'confirmado')>Confirmado</option>
@@ -158,7 +163,7 @@
                         <a href="{{ route('admin.edit-pago', $pago->id) }}" style="color: var(--accent-light); text-decoration: none;" title="Editar">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <form action="{{ route('admin.destroy-pago', $pago->id) }}" method="POST" onsubmit="return confirm('¿Eliminar este pago?');" style="display: inline;">
+                        <form action="{{ route('admin.destroy-pago', $pago->id) }}" method="POST" onsubmit="return confirm('¿Enviar este pago a la papelera?');" style="display: inline;">
                             @csrf
                             @method('DELETE')
                             <button type="submit" style="background: none; border: none; color: #ff6b6b; cursor: pointer;">

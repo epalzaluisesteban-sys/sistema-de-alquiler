@@ -60,7 +60,8 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/inquilino/{id}/desalojar', [InquilinoController::class, 'desalojarInquilino'])->name('admin.desalojar-inquilino');
         Route::get('/inquilino/{id}/historial', [InquilinoController::class, 'historial'])->name('admin.historial-inquilino');
 
-        // Pagos: listado, alta manual, edición, cambio rápido de estado y baja.
+        // Pagos: listado, alta manual, edición, cambio rápido de estado y baja
+        // (la baja es un soft delete; la papelera está en el grupo role:admin).
         Route::get('/pagos', [PagoController::class, 'pagos'])->name('admin.pagos');
         Route::get('/pagos/nuevo', [PagoController::class, 'nuevoPago'])->name('admin.nuevo-pago');
         Route::post('/pagos', [PagoController::class, 'storePago'])->name('admin.store-pago');
@@ -99,6 +100,12 @@ Route::middleware(['auth'])->group(function () {
 
             // Revertir: convierte a un encargado de vuelta en inquilino normal.
             Route::post('/encargado/{id}/revertir-inquilino', [EncargadoController::class, 'revertirInquilino'])->name('admin.revertir-inquilino');
+
+            // Papelera de pagos: los pagos eliminados (soft delete) solo los
+            // ve, restaura o borra definitivamente el Propietario.
+            Route::get('/pagos/papelera', [PagoController::class, 'papeleraPagos'])->name('admin.pagos-papelera');
+            Route::patch('/pagos/{id}/restaurar', [PagoController::class, 'restorePago'])->name('admin.restore-pago');
+            Route::delete('/pagos/{id}/definitivo', [PagoController::class, 'forceDestroyPago'])->name('admin.force-destroy-pago');
 
             // Propiedades: alta, edición y baja de propiedades del dueño.
             Route::get('/propiedades', [PropiedadController::class, 'propiedades'])->name('admin.propiedades');

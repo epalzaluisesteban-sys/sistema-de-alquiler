@@ -7,17 +7,19 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @mixin IdeHelperPago
  */
 class Pago extends Model
 {
-    use HasFactory, PerteneceAPropietario;
+    use HasFactory, PerteneceAPropietario, SoftDeletes;
 
     // Un pago asociado a un alquiler: monto, fecha, estado
     // (pendiente/confirmado/rechazado, según el flujo de PagoController) y la
-    // ruta al comprobante que el inquilino sube opcionalmente.
+    // ruta al comprobante que el inquilino sube opcionalmente. confirmado_por
+    // / confirmado_en registran quién y cuándo lo confirmó (ver PagoController).
     protected $fillable = [
         'asignacion_id',
         'monto',
@@ -25,11 +27,14 @@ class Pago extends Model
         'estado_pago',
         'tipo_pago',
         'ruta_comprobante',
+        'confirmado_por',
+        'confirmado_en',
     ];
 
     protected $casts = [
         'fecha' => 'date',
         'monto' => 'decimal:2',
+        'confirmado_en' => 'datetime',
     ];
 
     // Monedas posibles de un pago y su símbolo. No hay columna 'moneda': se
@@ -67,6 +72,12 @@ class Pago extends Model
     public function getMontoFormateadoAttribute(): string
     {
         return self::formatearMonto($this->monto, $this->moneda);
+    }
+
+    // confirma: Pago N --- 1 Usuario (el propietario/encargado que confirmó el pago)
+    public function confirmadoPor(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'confirmado_por');
     }
 
     // genera: Pago N --- 1 Asignacion (cada pago pertenece a un único alquiler)

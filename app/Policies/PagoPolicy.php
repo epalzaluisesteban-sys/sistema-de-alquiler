@@ -28,6 +28,18 @@ class PagoPolicy
         return $this->perteneceAlPropietario($usuario, $pago);
     }
 
+    // Papelera: restaurar o borrar definitivamente es exclusivo del
+    // Propietario dueño, no de sus Encargados.
+    public function restore(Usuario $usuario, Pago $pago): bool
+    {
+        return $usuario->esAdministrador() && $this->perteneceAlPropietario($usuario, $pago);
+    }
+
+    public function forceDelete(Usuario $usuario, Pago $pago): bool
+    {
+        return $usuario->esAdministrador() && $this->perteneceAlPropietario($usuario, $pago);
+    }
+
     private function perteneceAlPropietario(Usuario $usuario, Pago $pago): bool
     {
         $propietarioId = $usuario->propietarioId();

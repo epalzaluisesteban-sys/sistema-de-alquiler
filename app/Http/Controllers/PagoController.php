@@ -17,7 +17,7 @@ class PagoController extends Controller
         $hasta = $request->query('hasta');
 
         $pagos = Pago::porPropietario()
-            ->with(['asignacion.usuario', 'asignacion.habitacion.propiedad', 'asignacion.propiedad'])
+            ->with(['asignacion.usuario', 'asignacion.habitacion.propiedad', 'asignacion.propiedad', 'confirmadoPor'])
             ->when($estado, fn ($query) => $query->where('estado_pago', $estado))
             ->when($tipoPago, fn ($query) => $query->where('tipo_pago', $tipoPago))
             ->when($desde, fn ($query) => $query->whereDate('fecha', '>=', $desde))
@@ -79,7 +79,7 @@ class PagoController extends Controller
             'tipo_pago' => ['required', 'in:divisas,pago_movil'],
         ]);
 
-        Pago::create($validated);
+        Pago::create($this->conAuditoriaConfirmacion($validated));
 
         return redirect()->route('admin.pagos')->with('success', 'Pago registrado correctamente.');
     }
@@ -110,7 +110,7 @@ class PagoController extends Controller
             'tipo_pago' => ['required', 'in:divisas,pago_movil'],
         ]);
 
-        $pago->update($validated);
+        $pago->update($this->conAuditoriaConfirmacion($validated, $pago));
 
         return redirect()->route('admin.pagos')->with('success', 'Pago actualizado correctamente.');
     }
@@ -124,11 +124,13 @@ class PagoController extends Controller
             'estado_pago' => ['required', 'in:pendiente,notificado,confirmado'],
         ]);
 
-        $pago->update($validated);
+        $pago->update($this->conAuditoriaConfirmacion($validated, $pago));
 
         return back()->with('success', 'Estado del pago actualizado.');
     }
 
+    // Soft delete: el pago va a la papelera (solo el Propietario puede
+    // verla, restaurarlo o eliminarlo definitivamente).
     public function destroyPago($id)
     {
         $pago = Pago::findOrFail($id);
@@ -136,7 +138,57 @@ class PagoController extends Controller
 
         $pago->delete();
 
-        return redirect()->route('admin.pagos')->with('success', 'Pago eliminado correctamente.');
+        return redirect()->route('admin.pagos')->with('success', 'Pago enviado a la papelera.');
+    }
+
+    public function papeleraPagos()
+    {
+        $pagos = Pago::onlyTrashed()
+            ->porPropietario()
+            ->with(['asignacion.usuario', 'asignacion.habitacion.propiedad', 'asignacion.propiedad', 'confirmadoPor'])
+            ->orderByDesc('deleted_at')
+            ->paginate(15);
+
+        return view('Propietario.papelera-pagos', compact('pagos'));
+    }
+
+    public function restorePago($id)
+    {
+        $pago = Pago::onlyTrashed()->findOrFail($id);
+        $this->authorize('restore', $pago);
+
+        $pago->restore();
+
+        return redirect()->route('admin.pagos-papelera')->with('success', 'Pago restaurado correctamente.');
+    }
+
+    public function forceDestroyPago($id)
+    {
+        $pago = Pago::onlyTrashed()->findOrFail($id);
+        $this->authorize('forceDelete', $pago);
+
+        $pago->forceDelete();
+
+        return redirect()->route('admin.pagos-papelera')->with('success', 'Pago eliminado definitivamente.');
+    }
+
+    // Auditoría de confirmación: al pasar a 'confirmado' guarda quién y
+    // cuándo; si deja de estar confirmado se limpian, para que esos campos
+    // describan siempre la confirmación vigente.
+    private function conAuditoriaConfirmacion(array $datos, ?Pago $pago = null): array
+    {
+        $eraConfirmado = $pago?->estado_pago === 'confirmado';
+        $esConfirmado = $datos['estado_pago'] === 'confirmado';
+
+        if ($esConfirmado && ! $eraConfirmado) {
+            $datos['confirmado_por'] = auth()->id();
+            $datos['confirmado_en'] = now();
+        } elseif (! $esConfirmado && $eraConfirmado) {
+            $datos['confirmado_por'] = null;
+            $datos['confirmado_en'] = null;
+        }
+
+        return $datos;
     }
 
     // Regla de validación: la asignación elegida en el formulario debe ser
