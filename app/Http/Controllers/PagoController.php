@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePagoRequest;
+use App\Http\Requests\UpdatePagoRequest;
 use App\Models\Asignacion;
 use App\Models\Pago;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PagoController extends Controller
 {
@@ -69,17 +72,9 @@ class PagoController extends Controller
         return view('panel.nuevo-pago', compact('asignaciones', 'preseleccionada'));
     }
 
-    public function storePago(Request $request)
+    public function storePago(StorePagoRequest $request)
     {
-        $validated = $request->validate([
-            'asignacion_id' => ['required', 'exists:asignaciones,id', $this->asignacionDelPropietario()],
-            'monto' => ['required', 'numeric', 'min:0'],
-            'fecha' => ['required', 'date', 'before_or_equal:today'],
-            'estado_pago' => ['required', 'in:pendiente,notificado,confirmado'],
-            'tipo_pago' => ['required', 'in:divisas,pago_movil'],
-        ]);
-
-        Pago::create($this->conAuditoriaConfirmacion($validated));
+        Pago::create($this->conAuditoriaConfirmacion($request->validated()));
 
         return redirect()->route('admin.pagos')->with('success', 'Pago registrado correctamente.');
     }
@@ -97,20 +92,12 @@ class PagoController extends Controller
         return view('panel.editar-pago', compact('pago', 'asignaciones'));
     }
 
-    public function updatePago(Request $request, $id)
+    // La autorización (PagoPolicy::update) la hace UpdatePagoRequest antes de validar.
+    public function updatePago(UpdatePagoRequest $request)
     {
-        $pago = Pago::findOrFail($id);
-        $this->authorize('update', $pago);
+        $pago = $request->pago();
 
-        $validated = $request->validate([
-            'asignacion_id' => ['required', 'exists:asignaciones,id', $this->asignacionDelPropietario()],
-            'monto' => ['required', 'numeric', 'min:0'],
-            'fecha' => ['required', 'date', 'before_or_equal:today'],
-            'estado_pago' => ['required', 'in:pendiente,notificado,confirmado'],
-            'tipo_pago' => ['required', 'in:divisas,pago_movil'],
-        ]);
-
-        $pago->update($this->conAuditoriaConfirmacion($validated, $pago));
+        $pago->update($this->conAuditoriaConfirmacion($request->validated(), $pago));
 
         return redirect()->route('admin.pagos')->with('success', 'Pago actualizado correctamente.');
     }
@@ -130,7 +117,8 @@ class PagoController extends Controller
     }
 
     // Soft delete: el pago va a la papelera (solo el Propietario puede
-    // verla, restaurarlo o eliminarlo definitivamente).
+    // verla, restaurarlo o eliminarlo definitivamente). El comprobante se
+    // conserva a propósito: sirve de respaldo y permite restaurar el pago.
     public function destroyPago($id)
     {
         $pago = Pago::findOrFail($id);
@@ -169,6 +157,12 @@ class PagoController extends Controller
 
         $pago->forceDelete();
 
+        // Borrado definitivo: ya nada referencia el comprobante, así que se
+        // elimina el archivo para no dejar huérfanos en storage/app/public.
+        if ($pago->ruta_comprobante) {
+            Storage::disk('public')->delete($pago->ruta_comprobante);
+        }
+
         return redirect()->route('admin.pagos-papelera')->with('success', 'Pago eliminado definitivamente.');
     }
 
@@ -189,17 +183,5 @@ class PagoController extends Controller
         }
 
         return $datos;
-    }
-
-    // Regla de validación: la asignación elegida en el formulario debe ser
-    // de una propiedad del propietario actual (evita registrar o mover un
-    // pago hacia el alquiler de otro propietario manipulando el select).
-    private function asignacionDelPropietario(): \Closure
-    {
-        return function (string $attribute, $value, \Closure $fail) {
-            if (! Asignacion::porPropietario()->whereKey($value)->exists()) {
-                $fail('La asignación seleccionada no es válida.');
-            }
-        };
     }
 }
