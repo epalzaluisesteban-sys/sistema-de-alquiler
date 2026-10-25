@@ -47,6 +47,10 @@
 
             <button type="submit" class="btn-glossy" id="login-btn">Iniciar Sesión</button>
         </form>
+
+        <p style="text-align: center; margin-top: 15px;">
+            <a href="{{ route('password.request') }}">¿Olvidaste tu contraseña?</a>
+        </p>
     </div>
     <script>
         document.getElementById('login-form').addEventListener('submit', function () {

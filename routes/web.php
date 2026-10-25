@@ -14,6 +14,7 @@ use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\TenantController;
 // Controlador de autenticación (login/logout), común a todos los roles
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\PasswordResetController;
 
 // 1. Ruta principal: Muestra el Login directamente al entrar al sitio
 // 1. Ruta principal (Raíz): Al entrar a la dirección de la consola, mostrará el Login.
@@ -31,6 +32,19 @@ Route::get('/', function () {
 // Ruta para procesar el envío del formulario de login (POST): valida cédula +
 // contraseña vía LoginController::login y redirige según el rol mapeado.
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
+
+// Recuperación de contraseña sin correo: el sistema no tiene columna de
+// email ni mailer configurado (login es por cédula), así que se verifica
+// cédula + teléfono para emitir un enlace de recuperación de un solo uso.
+// El throttle limita los intentos de adivinar la combinación de otra persona.
+Route::get('/olvide-password', [PasswordResetController::class, 'mostrarFormularioSolicitud'])->name('password.request');
+Route::post('/olvide-password', [PasswordResetController::class, 'enviarSolicitud'])
+    ->middleware('throttle:5,1')
+    ->name('password.enviar-solicitud');
+Route::get('/olvide-password/{usuario}/{token}', [PasswordResetController::class, 'mostrarFormularioReset'])->name('password.reset.form');
+Route::post('/olvide-password/{usuario}/{token}', [PasswordResetController::class, 'resetear'])
+    ->middleware('throttle:5,1')
+    ->name('password.reset');
 
 // Agrupamos todas las rutas de aquí en adelante bajo el middleware 'auth':
 // cualquier visitante sin sesión iniciada es redirigido al login.
@@ -51,10 +65,9 @@ Route::middleware(['auth'])->group(function () {
         // Dashboard: resumen general para el propietario o encargado logueado.
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
-        // Inquilinos: listado, alta, edición y baja de inquilinos.
+        // Inquilinos: listado, edición y baja de inquilinos. El alta es
+        // exclusiva del Propietario (ver grupo role:admin más abajo).
         Route::get('/inquilinos', [InquilinoController::class, 'inquilinos'])->name('admin.inquilinos');
-        Route::get('/nuevo-inquilino', [InquilinoController::class, 'nuevoInquilino'])->name('admin.nuevo-inquilino');
-        Route::post('/nuevo-inquilino', [InquilinoController::class, 'storeInquilino'])->name('admin.store-inquilino');
         Route::get('/inquilino/{id}/editar', [InquilinoController::class, 'editInquilino'])->name('admin.edit-inquilino');
         Route::put('/inquilino/{id}', [InquilinoController::class, 'updateInquilino'])->name('admin.update-inquilino');
         Route::patch('/inquilino/{id}/desalojar', [InquilinoController::class, 'desalojarInquilino'])->name('admin.desalojar-inquilino');
@@ -80,12 +93,18 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/ajustes', [DashboardController::class, 'ajustes'])->name('admin.ajustes');
         Route::put('/ajustes', [DashboardController::class, 'updateAjustes'])->name('admin.update-ajustes');
         Route::put('/ajustes/personalizacion', [DashboardController::class, 'updatePersonalizacion'])->name('admin.update-personalizacion');
-        Route::put('/ajustes/precio-habitacion', [DashboardController::class, 'updatePrecioHabitacion'])->name('admin.update-precio-habitacion');
 
         // Gestión de Encargados, Propiedades y Habitaciones: exclusiva del
         // Propietario (dueño). Middleware anidado 'role:admin' porque, a
         // diferencia del resto de este grupo, el Encargado no puede entrar aquí.
         Route::middleware(['role:admin'])->group(function () {
+            // Alta de inquilinos: el Encargado puede gestionarlos pero no registrarlos.
+            Route::get('/nuevo-inquilino', [InquilinoController::class, 'nuevoInquilino'])->name('admin.nuevo-inquilino');
+            Route::post('/nuevo-inquilino', [InquilinoController::class, 'storeInquilino'])->name('admin.store-inquilino');
+
+            // Precio de habitación (Ajustes): solo lo fija el Propietario.
+            Route::put('/ajustes/precio-habitacion', [DashboardController::class, 'updatePrecioHabitacion'])->name('admin.update-precio-habitacion');
+
             // Encargados: alta, edición y baja de cuentas de encargado.
             Route::get('/encargados', [EncargadoController::class, 'encargados'])->name('admin.encargados');
             Route::get('/nuevo-encargado', [EncargadoController::class, 'nuevoEncargado'])->name('admin.nuevo-encargado');
@@ -137,9 +156,6 @@ Route::middleware(['auth'])->group(function () {
         // Residencias del inquilino (propiedad/habitación asignada).
         Route::get('/residencias', [TenantController::class, 'residencias'])->name('tenant.residencias');
 
-        // Historial de pagos ya notificados/registrados.
-        Route::get('/pagos', [TenantController::class, 'pagos'])->name('tenant.pagos');
-
         // Notificar un pago nuevo: formulario (GET) y envío (POST) con
         // monto, fecha y comprobante opcional.
         Route::get('/pagos/notificar', [TenantController::class, 'notificarPago'])->name('tenant.notificar-pago');
@@ -150,11 +166,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reportes', [TenantController::class, 'reportes'])->name('tenant.reportes');
         Route::post('/reportes', [TenantController::class, 'storeReporte'])->name('tenant.store-reporte');
 
-        // Ajustes: edición del perfil propio del inquilino (nombre, teléfono,
-        // contraseña). Vista y controlador separados de los de admin/encargado
-        // porque el contenido de ajustes varía según el rol.
+        // Ajustes: pestañas de datos personales (nombre, teléfono, contraseña),
+        // personalización del tema e historial de pagos ya notificados/registrados.
+        // Vista y controlador separados de los de admin/encargado porque el
+        // contenido de ajustes varía según el rol.
         Route::get('/ajustes', [TenantController::class, 'ajustes'])->name('tenant.ajustes');
         Route::put('/ajustes', [TenantController::class, 'updateAjustes'])->name('tenant.update-ajustes');
+        Route::put('/ajustes/personalizacion', [TenantController::class, 'updatePersonalizacion'])->name('tenant.update-personalizacion');
     });
 
 });
