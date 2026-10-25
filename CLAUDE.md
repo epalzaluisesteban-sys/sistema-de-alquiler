@@ -54,6 +54,14 @@ Three roles: **Propietario** (owner, mapped role `admin`), **Encargado** (manage
 - `App\Http\Controllers\TenantController` backs the `tenant.*` routes and renders `resources/views/Inquilino/*`.
 - `App\Http\Controllers\LoginController::login` authenticates via `Auth::attempt(['cedula' => ..., 'password' => ...])` and redirects based on the mapped role: `admin`/`encargado` → `admin.dashboard`, `tenant` → `tenant.dashboard`. Any other/missing role logs the user back out.
 
+### Ownership (multi-propietario)
+
+The system supports several Propietarios; each one (and their Encargados) only sees their own data. An Encargado belongs to a Propietario via `usuarios.propietario_id`; `Usuario::propietarioId()` resolves the effective owner (own id for propietario, `propietario_id` for encargado, null for inquilino). Inquilinos have no owner column — ownership is derived through their asignaciones → propiedad/habitación → `propiedades.usuario_id`.
+
+- Every admin-panel query must go through the `porPropietario()` scope (trait `App\Models\Concerns\PerteneceAPropietario`, used by Propiedad, Habitacion, Asignacion, Pago, Reporte, Usuario). Each model implements `filtrarPorPropietario()`; nested `whereHas` use `dePropietario($id)`. If no owner can be resolved the scope returns nothing, never everything.
+- Single-resource lookups by id use a scoped `findOrFail` (404 for foreign records), except Pago, which uses `App\Policies\PagoPolicy` via `$this->authorize(...)` (403). The base `Controller` uses `AuthorizesRequests` for this.
+- Form selects that reference another record (e.g. `asignacion_id` in pagos) must also be validated against the scope, not just `exists:`.
+
 ### Domain model relationships
 
 `Usuario` (owner/manager/tenant, discriminated by `rol`) → `Propiedad` (1:N, owner's properties) → `Habitacion` (1:N, rooms in a property) → `Asignacion` (1:N, a tenancy linking a `Usuario` (tenant) to a `Habitacion`) → `Pago` (1:N payments) and `Reporte` (1:N maintenance reports), both scoped to an `Asignacion`.

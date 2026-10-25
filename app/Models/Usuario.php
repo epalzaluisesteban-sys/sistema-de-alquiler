@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\PerteneceAPropietario;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -13,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Usuario extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, PerteneceAPropietario;
 
     // Modelo de autenticación real del sistema (ver config/auth.php): no se
     // usa la tabla 'users' de Laravel, sino 'usuarios'.
@@ -38,6 +41,7 @@ class Usuario extends Authenticatable
         'tema_fuente',
         'tema_boton',
         'precio_habitacion',
+        'propietario_id',
     ];
 
     // Oculta la contraseña hasheada al serializar el modelo (por ejemplo en respuestas JSON).
@@ -159,6 +163,30 @@ class Usuario extends Authenticatable
         return $this->hasOne(Inquilino::class);
     }
 
+    // pertenece: Usuario (encargado) N --- 1 Usuario (el propietario que lo gestiona)
+    public function propietario(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'propietario_id');
+    }
+
+    // gestiona: Usuario (propietario) 1 --- N Usuario (sus encargados)
+    public function encargados(): HasMany
+    {
+        return $this->hasMany(Usuario::class, 'propietario_id')->where('rol', 'encargado');
+    }
+
+    // Id del Propietario cuyos datos puede ver/gestionar este usuario en el
+    // panel admin: el suyo propio si es propietario, el de su propietario si
+    // es encargado, y null para inquilinos (no tienen acceso al panel).
+    public function propietarioId(): ?int
+    {
+        return match ($this->rol) {
+            'propietario' => $this->id,
+            'encargado' => $this->propietario_id,
+            default => null,
+        };
+    }
+
     // Helpers de rol basados en la columna cruda 'rol' (no en el accessor 'role').
     public function esAdministrador(): bool
     {
@@ -173,5 +201,15 @@ class Usuario extends Authenticatable
     public function esInquilino(): bool
     {
         return $this->rol === 'inquilino';
+    }
+
+    // Usuarios visibles para un propietario: sus encargados (propietario_id)
+    // y quienes tengan o hayan tenido una asignación en sus propiedades.
+    protected function filtrarPorPropietario(Builder $query, int $propietarioId): Builder
+    {
+        return $query->where(function ($q) use ($propietarioId) {
+            $q->where('propietario_id', $propietarioId)
+                ->orWhereHas('asignaciones', fn ($aq) => $aq->dePropietario($propietarioId));
+        });
     }
 }

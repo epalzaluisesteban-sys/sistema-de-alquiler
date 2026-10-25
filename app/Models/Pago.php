@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\PerteneceAPropietario;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Pago extends Model
 {
-    use HasFactory;
+    use HasFactory, PerteneceAPropietario;
 
     // Un pago asociado a un alquiler: monto, fecha, estado
     // (pendiente/confirmado/rechazado, según el flujo de PagoController) y la
@@ -34,5 +36,11 @@ class Pago extends Model
     public function asignacion(): BelongsTo
     {
         return $this->belongsTo(Asignacion::class);
+    }
+
+    // Ownership heredado de la asignación (alquiler) a la que pertenece.
+    protected function filtrarPorPropietario(Builder $query, int $propietarioId): Builder
+    {
+        return $query->whereHas('asignacion', fn ($q) => $q->dePropietario($propietarioId));
     }
 }

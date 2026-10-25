@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\PerteneceAPropietario;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Propiedad extends Model
 {
-    use HasFactory;
+    use HasFactory, PerteneceAPropietario;
 
     // Nombre de tabla explícito: por convención Eloquent buscaría
     // "propiedads", así que hay que indicarlo a mano (ver nota de
@@ -45,5 +47,11 @@ class Propiedad extends Model
     public function asignaciones(): HasMany
     {
         return $this->hasMany(Asignacion::class);
+    }
+
+    // Ownership directo: la propiedad pertenece a su usuario_id.
+    protected function filtrarPorPropietario(Builder $query, int $propietarioId): Builder
+    {
+        return $query->where('usuario_id', $propietarioId);
     }
 }

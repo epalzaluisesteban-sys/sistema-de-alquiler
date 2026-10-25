@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\PerteneceAPropietario;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Reporte extends Model
 {
-    use HasFactory;
+    use HasFactory, PerteneceAPropietario;
 
     // Un reporte de mantenimiento: a qué alquiler pertenece, qué problema
     // describe el inquilino, cuándo se creó y en qué estado está
@@ -31,5 +33,11 @@ class Reporte extends Model
     public function asignacion(): BelongsTo
     {
         return $this->belongsTo(Asignacion::class);
+    }
+
+    // Ownership heredado de la asignación (alquiler) a la que pertenece.
+    protected function filtrarPorPropietario(Builder $query, int $propietarioId): Builder
+    {
+        return $query->whereHas('asignacion', fn ($q) => $q->dePropietario($propietarioId));
     }
 }

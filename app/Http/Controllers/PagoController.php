@@ -16,7 +16,8 @@ class PagoController extends Controller
         $desde = $request->query('desde');
         $hasta = $request->query('hasta');
 
-        $pagos = Pago::with(['asignacion.usuario', 'asignacion.habitacion.propiedad', 'asignacion.propiedad'])
+        $pagos = Pago::porPropietario()
+            ->with(['asignacion.usuario', 'asignacion.habitacion.propiedad', 'asignacion.propiedad'])
             ->when($estado, fn ($query) => $query->where('estado_pago', $estado))
             ->when($tipoPago, fn ($query) => $query->where('tipo_pago', $tipoPago))
             ->when($desde, fn ($query) => $query->whereDate('fecha', '>=', $desde))
@@ -56,7 +57,8 @@ class PagoController extends Controller
 
     public function nuevoPago(Request $request)
     {
-        $asignaciones = Asignacion::where('estado_asignacion', 'activo')
+        $asignaciones = Asignacion::porPropietario()
+            ->where('estado_asignacion', 'activo')
             ->with(['usuario', 'habitacion.propiedad', 'propiedad'])
             ->get();
 
@@ -70,7 +72,7 @@ class PagoController extends Controller
     public function storePago(Request $request)
     {
         $validated = $request->validate([
-            'asignacion_id' => ['required', 'exists:asignaciones,id'],
+            'asignacion_id' => ['required', 'exists:asignaciones,id', $this->asignacionDelPropietario()],
             'monto' => ['required', 'numeric', 'min:0'],
             'fecha' => ['required', 'date', 'before_or_equal:today'],
             'estado_pago' => ['required', 'in:pendiente,notificado,confirmado'],
@@ -85,9 +87,10 @@ class PagoController extends Controller
     public function editPago($id)
     {
         $pago = Pago::findOrFail($id);
+        $this->authorize('update', $pago);
 
-        $asignaciones = Asignacion::where('estado_asignacion', 'activo')
-            ->orWhere('id', $pago->asignacion_id)
+        $asignaciones = Asignacion::porPropietario()
+            ->where(fn ($q) => $q->where('estado_asignacion', 'activo')->orWhere('id', $pago->asignacion_id))
             ->with(['usuario', 'habitacion.propiedad', 'propiedad'])
             ->get();
 
@@ -97,9 +100,10 @@ class PagoController extends Controller
     public function updatePago(Request $request, $id)
     {
         $pago = Pago::findOrFail($id);
+        $this->authorize('update', $pago);
 
         $validated = $request->validate([
-            'asignacion_id' => ['required', 'exists:asignaciones,id'],
+            'asignacion_id' => ['required', 'exists:asignaciones,id', $this->asignacionDelPropietario()],
             'monto' => ['required', 'numeric', 'min:0'],
             'fecha' => ['required', 'date', 'before_or_equal:today'],
             'estado_pago' => ['required', 'in:pendiente,notificado,confirmado'],
@@ -114,6 +118,7 @@ class PagoController extends Controller
     public function quickUpdateEstadoPago(Request $request, $id)
     {
         $pago = Pago::findOrFail($id);
+        $this->authorize('update', $pago);
 
         $validated = $request->validate([
             'estado_pago' => ['required', 'in:pendiente,notificado,confirmado'],
@@ -126,8 +131,23 @@ class PagoController extends Controller
 
     public function destroyPago($id)
     {
-        Pago::findOrFail($id)->delete();
+        $pago = Pago::findOrFail($id);
+        $this->authorize('delete', $pago);
+
+        $pago->delete();
 
         return redirect()->route('admin.pagos')->with('success', 'Pago eliminado correctamente.');
+    }
+
+    // Regla de validación: la asignación elegida en el formulario debe ser
+    // de una propiedad del propietario actual (evita registrar o mover un
+    // pago hacia el alquiler de otro propietario manipulando el select).
+    private function asignacionDelPropietario(): \Closure
+    {
+        return function (string $attribute, $value, \Closure $fail) {
+            if (! Asignacion::porPropietario()->whereKey($value)->exists()) {
+                $fail('La asignación seleccionada no es válida.');
+            }
+        };
     }
 }

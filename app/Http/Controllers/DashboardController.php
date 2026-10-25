@@ -13,14 +13,15 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $inquilinosActivos = Asignacion::where('estado_asignacion', 'activo')->distinct('usuario_id')->count('usuario_id');
-        $pagosPendientes = Pago::whereIn('estado_pago', ['pendiente', 'notificado'])->count();
-        $ingresosMes = Pago::where('estado_pago', 'confirmado')
+        $inquilinosActivos = Asignacion::porPropietario()->where('estado_asignacion', 'activo')->distinct('usuario_id')->count('usuario_id');
+        $pagosPendientes = Pago::porPropietario()->whereIn('estado_pago', ['pendiente', 'notificado'])->count();
+        $ingresosMes = Pago::porPropietario()->where('estado_pago', 'confirmado')
             ->whereMonth('fecha', now()->month)
             ->whereYear('fecha', now()->year)
             ->sum('monto');
 
-        $ultimosMovimientos = Pago::with(['asignacion.usuario', 'asignacion.habitacion.propiedad', 'asignacion.propiedad'])
+        $ultimosMovimientos = Pago::porPropietario()
+            ->with(['asignacion.usuario', 'asignacion.habitacion.propiedad', 'asignacion.propiedad'])
             ->whereMonth('fecha', now()->month)
             ->whereYear('fecha', now()->year)
             ->orderByDesc('fecha')
@@ -35,12 +36,14 @@ class DashboardController extends Controller
 
     public function notificaciones()
     {
-        $reportes = Reporte::whereIn('estado_reporte', ['pendiente', 'en_revision'])
+        $reportes = Reporte::porPropietario()
+            ->whereIn('estado_reporte', ['pendiente', 'en_revision'])
             ->with(['asignacion.usuario', 'asignacion.habitacion.propiedad', 'asignacion.propiedad'])
             ->orderByDesc('fecha')
             ->get();
 
-        $avisosPago = Pago::whereIn('estado_pago', ['pendiente', 'notificado'])
+        $avisosPago = Pago::porPropietario()
+            ->whereIn('estado_pago', ['pendiente', 'notificado'])
             ->with(['asignacion.usuario', 'asignacion.habitacion.propiedad', 'asignacion.propiedad'])
             ->orderByDesc('fecha')
             ->get();
@@ -51,9 +54,11 @@ class DashboardController extends Controller
     public function ajustes()
     {
         $inquilinos = Usuario::where('rol', 'inquilino')
-            ->withCount('asignaciones')
+            ->porPropietario()
+            ->withCount(['asignaciones' => fn ($query) => $query->porPropietario()])
             ->with(['asignaciones' => function ($query) {
-                $query->where('estado_asignacion', 'activo')
+                $query->porPropietario()
+                    ->where('estado_asignacion', 'activo')
                     ->latest('fecha_inicio')
                     ->with(['habitacion.propiedad', 'propiedad']);
             }])

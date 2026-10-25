@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\PerteneceAPropietario;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Asignacion extends Model
 {
-    use HasFactory;
+    use HasFactory, PerteneceAPropietario;
 
     protected $table = 'asignaciones';
 
@@ -74,5 +76,14 @@ class Asignacion extends Model
     public function reportes(): HasMany
     {
         return $this->hasMany(Reporte::class);
+    }
+
+    // Ownership heredado de la residencia: propiedad completa o habitación.
+    protected function filtrarPorPropietario(Builder $query, int $propietarioId): Builder
+    {
+        return $query->where(function ($q) use ($propietarioId) {
+            $q->whereHas('propiedad', fn ($pq) => $pq->dePropietario($propietarioId))
+                ->orWhereHas('habitacion', fn ($hq) => $hq->dePropietario($propietarioId));
+        });
     }
 }

@@ -16,9 +16,10 @@ class EncargadoController extends Controller
 
     public function encargados()
     {
-        $encargados = Usuario::where('rol', 'encargado')
+        $encargados = auth()->user()->encargados()
             ->with(['asignaciones' => function ($query) {
-                $query->where('estado_asignacion', 'activo')
+                $query->porPropietario()
+                    ->where('estado_asignacion', 'activo')
                     ->latest('fecha_inicio')
                     ->with(['habitacion.propiedad', 'propiedad']);
             }])
@@ -33,8 +34,8 @@ class EncargadoController extends Controller
         // Mismo criterio que "Nuevo Inquilino": solo propiedades sin
         // habitaciones se pueden asignar como "Casa" completa; las que
         // tienen habitaciones se asignan por habitación.
-        $properties = Propiedad::where('estado', 'disponible')->doesntHave('habitaciones')->orderBy('nombre')->get();
-        $rooms = Habitacion::where('estado', 'disponible')->with('propiedad.usuario')->orderBy('numero')->get();
+        $properties = Propiedad::porPropietario()->where('estado', 'disponible')->doesntHave('habitaciones')->orderBy('nombre')->get();
+        $rooms = Habitacion::porPropietario()->where('estado', 'disponible')->with('propiedad.usuario')->orderBy('numero')->get();
 
         return view('Propietario.nuevo-encargado', compact('properties', 'rooms'));
     }
@@ -63,6 +64,7 @@ class EncargadoController extends Controller
             'telefono' => $request->telefono,
             'password' => $request->contrasena,
             'role' => 'encargado',
+            'propietario_id' => auth()->user()->propietarioId(),
         ]);
 
         if ($request->filled('rental_type') && $request->filled('property_id')) {
@@ -74,20 +76,21 @@ class EncargadoController extends Controller
 
     public function editEncargado($id)
     {
-        $encargado = Usuario::where('rol', 'encargado')->findOrFail($id);
+        $encargado = auth()->user()->encargados()->findOrFail($id);
 
-        $asignacionActiva = Asignacion::where('usuario_id', $id)
+        $asignacionActiva = Asignacion::porPropietario()
+            ->where('usuario_id', $id)
             ->where('estado_asignacion', 'activo')
             ->latest('fecha_inicio')
             ->first();
 
-        $properties = Propiedad::where('estado', 'disponible')
-            ->orWhere('id', $asignacionActiva?->propiedad_id)
+        $properties = Propiedad::porPropietario()
+            ->where(fn ($q) => $q->where('estado', 'disponible')->orWhere('id', $asignacionActiva?->propiedad_id))
             ->orderBy('nombre')
             ->get();
 
-        $rooms = Habitacion::where('estado', 'disponible')
-            ->orWhere('id', $asignacionActiva?->habitacion_id)
+        $rooms = Habitacion::porPropietario()
+            ->where(fn ($q) => $q->where('estado', 'disponible')->orWhere('id', $asignacionActiva?->habitacion_id))
             ->with('propiedad')
             ->orderBy('numero')
             ->get();
@@ -97,7 +100,7 @@ class EncargadoController extends Controller
 
     public function updateEncargado(Request $request, $id)
     {
-        $encargado = Usuario::where('rol', 'encargado')->findOrFail($id);
+        $encargado = auth()->user()->encargados()->findOrFail($id);
 
         $request->validate([
             'nombre' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
@@ -130,7 +133,8 @@ class EncargadoController extends Controller
         $tipo = $request->input('rental_type');
         $propertyId = $request->input('property_id');
 
-        $asignacionActiva = Asignacion::where('usuario_id', $id)
+        $asignacionActiva = Asignacion::porPropietario()
+            ->where('usuario_id', $id)
             ->where('estado_asignacion', 'activo')
             ->latest('fecha_inicio')
             ->first();
@@ -163,9 +167,12 @@ class EncargadoController extends Controller
      */
     public function delegarInquilino($id)
     {
-        $inquilino = Usuario::where('rol', 'inquilino')->findOrFail($id);
+        $inquilino = Usuario::where('rol', 'inquilino')->porPropietario()->findOrFail($id);
 
-        $inquilino->update(['role' => 'encargado']);
+        $inquilino->update([
+            'role' => 'encargado',
+            'propietario_id' => auth()->user()->propietarioId(),
+        ]);
 
         Inquilino::where('usuario_id', $id)->delete();
 
@@ -179,7 +186,7 @@ class EncargadoController extends Controller
      */
     public function revertirInquilino($id)
     {
-        $encargado = Usuario::where('rol', 'encargado')->findOrFail($id);
+        $encargado = auth()->user()->encargados()->findOrFail($id);
 
         $encargado->update(['role' => 'inquilino']);
 
@@ -195,9 +202,10 @@ class EncargadoController extends Controller
      */
     public function desalojarEncargado($id)
     {
-        $encargado = Usuario::where('rol', 'encargado')->findOrFail($id);
+        $encargado = auth()->user()->encargados()->findOrFail($id);
 
-        Asignacion::where('usuario_id', $id)
+        Asignacion::porPropietario()
+            ->where('usuario_id', $id)
             ->where('estado_asignacion', 'activo')
             ->get()
             ->each(fn (Asignacion $asignacion) => $this->liberarAsignacion($asignacion));

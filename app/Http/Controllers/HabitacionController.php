@@ -11,10 +11,11 @@ class HabitacionController extends Controller
     public function habitaciones(Request $request)
     {
         $propiedad = $request->filled('propiedad_id')
-            ? Propiedad::find($request->integer('propiedad_id'))
+            ? Propiedad::porPropietario()->find($request->integer('propiedad_id'))
             : null;
 
-        $habitaciones = Habitacion::with([
+        $habitaciones = Habitacion::porPropietario()
+            ->with([
                 'propiedad.usuario',
                 'asignaciones' => fn ($q) => $q->where('estado_asignacion', 'activo'),
             ])
@@ -28,7 +29,7 @@ class HabitacionController extends Controller
 
     public function updateEstado(Request $request, $id)
     {
-        $habitacion = Habitacion::findOrFail($id);
+        $habitacion = Habitacion::porPropietario()->findOrFail($id);
 
         $validated = $request->validate([
             'estado' => ['required', 'in:disponible,ocupada,mantenimiento'],

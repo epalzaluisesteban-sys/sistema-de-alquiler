@@ -12,7 +12,8 @@ trait AsignaResidencia
     /**
      * Crea la Asignacion que liga a un usuario (inquilino o encargado) con
      * una Propiedad completa ("Casa") o con una Habitacion puntual, y marca
-     * esa residencia como ocupada.
+     * esa residencia como ocupada. Solo acepta residencias del propietario
+     * actual (devuelve null si el id es de otro propietario).
      */
     private function asignarResidencia(
         Usuario $usuario,
@@ -25,7 +26,7 @@ trait AsignaResidencia
         $fechaInicio ??= now()->toDateString();
 
         if ($tipo === 'Casa') {
-            $propiedad = Propiedad::find($id);
+            $propiedad = Propiedad::porPropietario()->find($id);
 
             if (! $propiedad) {
                 return null;
@@ -45,7 +46,7 @@ trait AsignaResidencia
             return $asignacion;
         }
 
-        $habitacion = Habitacion::find($id);
+        $habitacion = Habitacion::porPropietario()->find($id);
 
         if (! $habitacion) {
             return null;

@@ -11,7 +11,8 @@ class PropiedadController extends Controller
 {
     public function propiedades()
     {
-        $propiedades = Propiedad::withCount([
+        $propiedades = Propiedad::porPropietario()
+            ->withCount([
                 'habitaciones',
                 'habitaciones as habitaciones_ocupadas_count' => fn ($q) => $q->where('estado', 'ocupada'),
             ])
@@ -65,14 +66,14 @@ class PropiedadController extends Controller
 
     public function editPropiedad($id)
     {
-        $propiedad = Propiedad::findOrFail($id);
+        $propiedad = Propiedad::porPropietario()->findOrFail($id);
 
         return view('Propietario.editar-propiedad', compact('propiedad'));
     }
 
     public function updatePropiedad(Request $request, $id)
     {
-        $propiedad = Propiedad::findOrFail($id);
+        $propiedad = Propiedad::porPropietario()->findOrFail($id);
 
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
@@ -124,7 +125,7 @@ class PropiedadController extends Controller
 
     public function destroyPropiedad($id)
     {
-        Propiedad::findOrFail($id)->delete();
+        Propiedad::porPropietario()->findOrFail($id)->delete();
 
         return redirect()->route('admin.propiedades')->with('success', 'Propiedad eliminada correctamente.');
     }

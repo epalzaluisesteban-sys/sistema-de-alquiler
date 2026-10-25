@@ -18,8 +18,10 @@ class InquilinoController extends Controller
     public function inquilinos()
     {
         $inquilinos = Usuario::where('rol', 'inquilino')
+            ->porPropietario()
             ->with(['asignaciones' => function ($query) {
-                $query->where('estado_asignacion', 'activo')
+                $query->porPropietario()
+                    ->where('estado_asignacion', 'activo')
                     ->latest('fecha_inicio')
                     ->with(['habitacion.propiedad', 'propiedad']);
             }])
@@ -33,8 +35,8 @@ class InquilinoController extends Controller
     {
         // Solo propiedades sin habitaciones se pueden alquilar como "Casa"
         // completa; las que tienen habitaciones se alquilan por habitación.
-        $properties = Propiedad::where('estado', 'disponible')->doesntHave('habitaciones')->orderBy('nombre')->get();
-        $rooms = Habitacion::where('estado', 'disponible')->with('propiedad.usuario')->orderBy('numero')->get();
+        $properties = Propiedad::porPropietario()->where('estado', 'disponible')->doesntHave('habitaciones')->orderBy('nombre')->get();
+        $rooms = Habitacion::porPropietario()->where('estado', 'disponible')->with('propiedad.usuario')->orderBy('numero')->get();
 
         // Preselección al llegar desde la tabla de habitaciones (click en
         // una habitación "disponible"). Si ya no está disponible, se
@@ -75,9 +77,19 @@ class InquilinoController extends Controller
         // El precio no se pide en este formulario: para "Casa" se toma el
         // precio acordado de la propiedad, para "Habitación" el precio
         // definido globalmente en Ajustes (ya guardado en la habitación).
+        $residencia = $request->rental_type === 'Casa'
+            ? Propiedad::porPropietario()->find($request->property_id)
+            : Habitacion::porPropietario()->find($request->property_id);
+
+        if (! $residencia) {
+            return back()->withInput()->withErrors([
+                'property_id' => 'La residencia seleccionada no es válida.',
+            ]);
+        }
+
         $precio = $request->rental_type === 'Casa'
-            ? Propiedad::find($request->property_id)?->precio_acordado
-            : Habitacion::find($request->property_id)?->precio_actual;
+            ? $residencia->precio_acordado
+            : $residencia->precio_actual;
 
         if ($precio === null) {
             return back()->withInput()->withErrors([
@@ -121,20 +133,21 @@ class InquilinoController extends Controller
 
     public function editInquilino($id)
     {
-        $inquilino = Usuario::findOrFail($id);
+        $inquilino = Usuario::where('rol', 'inquilino')->porPropietario()->findOrFail($id);
 
-        $asignacionActiva = Asignacion::where('usuario_id', $id)
+        $asignacionActiva = Asignacion::porPropietario()
+            ->where('usuario_id', $id)
             ->where('estado_asignacion', 'activo')
             ->latest('fecha_inicio')
             ->first();
 
-        $properties = Propiedad::where('estado', 'disponible')
-            ->orWhere('id', $asignacionActiva?->propiedad_id)
+        $properties = Propiedad::porPropietario()
+            ->where(fn ($q) => $q->where('estado', 'disponible')->orWhere('id', $asignacionActiva?->propiedad_id))
             ->orderBy('nombre')
             ->get();
 
-        $rooms = Habitacion::where('estado', 'disponible')
-            ->orWhere('id', $asignacionActiva?->habitacion_id)
+        $rooms = Habitacion::porPropietario()
+            ->where(fn ($q) => $q->where('estado', 'disponible')->orWhere('id', $asignacionActiva?->habitacion_id))
             ->with('propiedad')
             ->orderBy('numero')
             ->get();
@@ -144,7 +157,7 @@ class InquilinoController extends Controller
 
     public function updateInquilino(Request $request, $id)
     {
-        $inquilino = Usuario::findOrFail($id);
+        $inquilino = Usuario::where('rol', 'inquilino')->porPropietario()->findOrFail($id);
 
         $request->validate([
             'nombre' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
@@ -178,7 +191,8 @@ class InquilinoController extends Controller
         $propertyId = $request->input('property_id');
 
         if ($tipo && $propertyId) {
-            $asignacionActiva = Asignacion::where('usuario_id', $id)
+            $asignacionActiva = Asignacion::porPropietario()
+                ->where('usuario_id', $id)
                 ->where('estado_asignacion', 'activo')
                 ->latest('fecha_inicio')
                 ->first();
@@ -209,9 +223,12 @@ class InquilinoController extends Controller
         // Accesible también para encargados que viven en una propiedad: el
         // historial de residencias/pagos no depende del rol, solo de tener
         // asignaciones.
-        $inquilino = Usuario::whereIn('rol', ['inquilino', 'encargado'])->findOrFail($id);
+        $inquilino = Usuario::whereIn('rol', ['inquilino', 'encargado'])->porPropietario()->findOrFail($id);
 
-        $asignaciones = Asignacion::where('usuario_id', $id)
+        // Solo las residencias de este propietario: si el inquilino también
+        // alquiló con otro propietario, ese historial no se expone aquí.
+        $asignaciones = Asignacion::porPropietario()
+            ->where('usuario_id', $id)
             ->with(['habitacion.propiedad', 'propiedad', 'pagos'])
             ->orderByDesc('fecha_inicio')
             ->get();
@@ -226,9 +243,10 @@ class InquilinoController extends Controller
      */
     public function desalojarInquilino($id)
     {
-        $user = Usuario::findOrFail($id);
+        Usuario::where('rol', 'inquilino')->porPropietario()->findOrFail($id);
 
-        Asignacion::where('usuario_id', $id)
+        Asignacion::porPropietario()
+            ->where('usuario_id', $id)
             ->where('estado_asignacion', 'activo')
             ->get()
             ->each(fn (Asignacion $asignacion) => $this->liberarAsignacion($asignacion));

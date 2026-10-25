@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\PerteneceAPropietario;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Habitacion extends Model
 {
-    use HasFactory;
+    use HasFactory, PerteneceAPropietario;
 
     protected $table = 'habitaciones';
 
@@ -45,5 +47,11 @@ class Habitacion extends Model
     public function getPrecioActualAttribute(): ?float
     {
         return $this->propiedad?->usuario?->precio_habitacion;
+    }
+
+    // Ownership heredado de la propiedad que contiene la habitación.
+    protected function filtrarPorPropietario(Builder $query, int $propietarioId): Builder
+    {
+        return $query->whereHas('propiedad', fn ($q) => $q->dePropietario($propietarioId));
     }
 }
